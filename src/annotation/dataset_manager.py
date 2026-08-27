@@ -105,7 +105,7 @@ names:
         with open(self.manifest_path, "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2, ensure_ascii=False)
 
-    def save_annotation(self, image_bgr, boxes=None, polygons=None, source_video="video", frame_timestamp=0.0, notes=""):
+    def save_annotation(self, image_bgr, boxes=None, polygons=None, source_video="video", frame_timestamp=0.0, notes="", is_ai_assisted=False, model_used="", human_corrected=True):
         """
         Salva um frame de imagem, caixas (BBox) e polígonos de segmentação no formato YOLO.
         boxes: lista de dicts com {"class_id": int, "x1": float, "y1": float, "x2": float, "y2": float}
@@ -196,7 +196,7 @@ names:
         with open(label_path, "w", encoding="utf-8") as f:
             f.write("\n".join(label_lines) + ("\n" if label_lines else ""))
 
-        # Atualiza manifesto
+        # Atualiza manifesto com metadados de treinamento e assistência por IA
         manifest = self._load_manifest()
         manifest[image_id] = {
             "id": image_id,
@@ -211,7 +211,10 @@ names:
             "num_polygons": len(normalized_polygons),
             "boxes": normalized_boxes,
             "polygons": normalized_polygons,
-            "notes": notes
+            "notes": notes,
+            "is_ai_assisted": is_ai_assisted,
+            "model_used": model_used,
+            "human_corrected": human_corrected
         }
         self._save_manifest(manifest)
 

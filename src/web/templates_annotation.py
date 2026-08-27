@@ -196,7 +196,27 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         .cvat-btn.success:hover { background: #389e0d; }
         .cvat-btn.ai { background: #531dab; border-color: #722ed1; color: #fff; }
         .cvat-btn.ai:hover { background: #722ed1; }
+        .cvat-btn.danger { background: #a8071a; border-color: #cf1322; color: #fff; font-weight: 700; }
+        .cvat-btn.danger:hover { background: #cf1322; border-color: #f5222d; }
         .cvat-btn.icon-only { padding: 4px 7px; }
+
+        .model-selector-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #191424;
+            border: 1px solid #531dab;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .ai-active-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #d3adf7;
+        }
 
         /* ===== MAIN WORKSPACE BODY ===== */
         .cvat-body {
@@ -532,12 +552,12 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
 </head>
 <body>
 
-    <!-- 1. TOP HEADER (CLEAN MINIMALIST CVAT) -->
+    <!-- 1. TOP HEADER (CLEAN MINIMALIST CVAT COM MODELO ATRELADO) -->
     <div class="cvat-header">
         <div class="header-left">
             <div class="cvat-logo">
                 <span class="cvat-logo-badge">CVAT</span>
-                <span>Naval</span>
+                <span id="header-domain-badge">Naval</span>
             </div>
 
             <!-- SELETOR DE MODO COMPACTO -->
@@ -547,6 +567,15 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             </div>
 
             <span class="task-file-badge" id="current-video-title" title="Fonte Ativa">teste_santos_3minutos_completo.mp4</span>
+
+            <!-- SELETOR DE MODELO DE IA ATRELADO NO HEADER -->
+            <div class="model-selector-group" title="Modelo de IA Atrelado para Percepção e Auto-Rotulagem">
+                <span class="ai-active-indicator">🤖 Modelo:</span>
+                <select class="cvat-select" id="select-ai-model-header" style="width:auto; margin:0; padding:2px 6px; font-size:11px; font-weight:600; background:#221b33; border:1px solid #722ed1; color:#fff; border-radius:3px;">
+                    <option value="domain_default">Modelo Especialista</option>
+                </select>
+                <button class="mode-btn active" id="btn-toggle-auto-ai" style="padding:2px 6px; font-size:10px; border-radius:3px;" title="Executar Detecção Automaticamente ao Pausar ou Mudar de Frame">⚡ Auto-IA: ON</button>
+            </div>
         </div>
 
         <div class="header-center">
@@ -569,11 +598,14 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         </div>
 
         <div class="header-right">
-            <button class="cvat-btn success" id="btn-save-yolo" title="Salvar Anotações (Ctrl+S)">
-                💾 Salvar
-            </button>
-            <button class="cvat-btn ai" id="btn-ai-auto" title="Auto-Rotular com IA">
+            <button class="cvat-btn ai" id="btn-ai-auto" title="Executar Inferência do Modelo de IA no Frame Atual (A)">
                 🤖 Auto-IA
+            </button>
+            <button class="cvat-btn danger" id="btn-delete-all-boxes" title="Deletar TODAS as anotações deste frame para refazer do zero (Alt+C)">
+                🗑️ Deletar Tudo
+            </button>
+            <button class="cvat-btn success" id="btn-save-yolo" title="Salvar Anotações Corrigidas no Dataset YOLO (Ctrl+S)">
+                💾 Salvar
             </button>
             <a href="/api/annotation/export_zip" class="cvat-btn" id="btn-export-zip" title="Exportar Dataset YOLO (.ZIP)">
                 📦 Exportar
@@ -604,10 +636,13 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8M6 14v-2a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6a7 7 0 0 0 7 7h3a7 7 0 0 0 7-7v-6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/></svg>
             </button>
             <div class="tool-divider"></div>
+            <button class="tool-icon" id="tool-run-ai-left" title="Executar Modelo de IA no Frame (A)">
+                <span style="font-size:14px;">🤖</span>
+            </button>
             <button class="tool-icon" id="tool-del-box" title="Excluir Objeto Selecionado (Del / Backspace)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
-            <button class="tool-icon" id="tool-clear-all" title="Limpar todos os objetos deste frame">
+            <button class="tool-icon" id="tool-clear-all" title="Limpar TODAS as anotações deste frame (Alt+C)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </button>
         </div>
@@ -619,6 +654,10 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 <strong id="active-class-indicator" style="color:var(--cvat-cyan);">embarcacao (1)</strong>
                 <span style="color:var(--cvat-text-disabled);">|</span>
                 <span id="canvas-active-tool-badge" style="color:var(--cvat-accent);">Retângulo (N)</span>
+                <span style="color:var(--cvat-text-disabled);">|</span>
+                <span id="canvas-ai-badge" style="color:#b37feb; font-weight:700; cursor:pointer;" title="Clique para rodar inferência da IA">🤖 IA: YOLO11n (0.20)</span>
+                <button class="cvat-btn ai" id="btn-hud-run-ai" style="padding:2px 7px; font-size:10px;" title="Executar Modelo no Frame (A)">🤖 Rodar IA</button>
+                <button class="cvat-btn danger" id="btn-hud-clear-all" style="padding:2px 7px; font-size:10px;" title="Limpar Todas as Anotações (Alt+C)">🗑️ Limpar Tudo</button>
             </div>
 
             <!-- LIVE BADGE -->
@@ -643,12 +682,13 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             <div class="canvas-coords-badge" id="cursor-coords">X: 0 | Y: 0</div>
         </div>
 
-        <!-- RIGHT SIDEBAR (CVAT OBJECTS, LABELS & DATASET) -->
+        <!-- RIGHT SIDEBAR (CVAT OBJECTS, LABELS, IA & DATASET) -->
         <div class="cvat-right-sidebar">
             <div class="sidebar-tabs">
                 <div class="sidebar-tab active" data-tab="objects">Objetos (<span id="count-objects">0</span>)</div>
-                <div class="sidebar-tab" data-tab="labels">Classes &amp; Presets</div>
-                <div class="sidebar-tab" data-tab="dataset">Dataset &amp; Fontes</div>
+                <div class="sidebar-tab" data-tab="labels">Classes</div>
+                <div class="sidebar-tab" data-tab="ai">🤖 IA &amp; Correção</div>
+                <div class="sidebar-tab" data-tab="dataset">Dataset</div>
             </div>
 
             <div class="sidebar-content">
@@ -661,7 +701,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
 
                     <div id="objects-list-wrap" style="display:flex; flex-direction:column; gap:6px; max-height:calc(100vh - 280px); overflow-y:auto;">
                         <div style="color:var(--cvat-text-disabled); font-size:11px; text-align:center; padding:20px 0;">
-                            Nenhum objeto neste frame.<br>Pressione <strong>N</strong> (Retângulo) ou <strong>P</strong> (Polígono/Segmentação) para desenhar.
+                            Nenhum objeto neste frame.<br>Pressione <strong>N</strong> (Retângulo), <strong>P</strong> (Polígono) ou <strong>A</strong> (Auto-IA).
                         </div>
                     </div>
 
@@ -707,7 +747,67 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
 
-                <!-- TAB 3: DATASET & FONTES (VÍDEO GRAVADO vs AO VIVO vs IMPORTAÇÃO) -->
+                <!-- TAB 3: MODELO DE IA & ACTIVE LEARNING / CORREÇÃO -->
+                <div class="tab-pane" id="pane-ai">
+                    <!-- MODELO ATRELADO -->
+                    <div style="background:#1b1528; border:1px solid #722ed1; border-radius:4px; padding:10px; margin-bottom:10px;">
+                        <span style="color:#d3adf7; font-size:11px; font-weight:700; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
+                            🤖 Modelo de IA Atrelado
+                        </span>
+                        <select class="cvat-select" id="select-ai-model-sidebar" style="border-color:#722ed1; margin-top:6px;">
+                            <option value="domain_default">Modelo Especialista do Domínio</option>
+                            <option value="yolo11n">YOLO11n Baseline Edge</option>
+                            <option value="mayrajeo_marine">Mayrajeo YOLOv8 Marine Vessel</option>
+                            <option value="mewan2808_sar">MeWan2808 YOLOv8 SAR Radar</option>
+                            <option value="sixopen_y8naval">SixOpen Y8Naval (Aéreo/Satélite)</option>
+                            <option value="ensemble_full">Ensemble Multi-Domínio Completo</option>
+                        </select>
+                        <span id="ai-model-description" style="font-size:10px; color:#b37feb; display:block; margin-top:4px;">
+                            Detector acoplado para auto-rotular alvos no frame.
+                        </span>
+                    </div>
+
+                    <!-- PARÂMETROS DE DETECÇÃO -->
+                    <div style="background:var(--cvat-bg-surface); padding:10px; border-radius:4px; border:1px solid var(--cvat-border); margin-bottom:10px; display:flex; flex-direction:column; gap:8px;">
+                        <span style="color:var(--cvat-text-primary); font-size:11px; font-weight:700; text-transform:uppercase;">
+                            ⚙️ Parâmetros de Inferência
+                        </span>
+                        <div class="setting-row">
+                            <span>Limiar de Confiança:</span>
+                            <span id="display-ai-conf" style="font-family:var(--font-mono); color:var(--cvat-accent); font-weight:700;">20%</span>
+                        </div>
+                        <input type="range" id="slider-ai-conf" min="0.05" max="0.90" step="0.05" value="0.20" style="width:100%;">
+
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
+                            <span style="font-size:11px; color:var(--cvat-text-secondary);">Auto-IA ao pausar frame:</span>
+                            <input type="checkbox" id="check-auto-ai-pause" checked style="cursor:pointer; transform:scale(1.15);">
+                        </div>
+                    </div>
+
+                    <!-- AÇÕES HUMAN-IN-THE-LOOP & CORREÇÃO -->
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <button class="cvat-btn ai" id="btn-run-ai-sidebar" style="width:100%; justify-content:center; padding:8px 0; font-size:11.5px;">
+                            🤖 Executar Inferência da IA no Frame (A)
+                        </button>
+                        <button class="cvat-btn danger" id="btn-clear-all-ai" style="width:100%; justify-content:center; padding:8px 0; font-size:11.5px;">
+                            🗑️ Deletar Todas as Anotações (Limpar Frame)
+                        </button>
+                        <button class="cvat-btn success" id="btn-save-corrected-sidebar" style="width:100%; justify-content:center; padding:8px 0; font-size:11.5px;">
+                            💾 Salvar Frame Corrigido no Dataset (Ctrl+S)
+                        </button>
+                    </div>
+
+                    <!-- DICA DE ACTIVE LEARNING -->
+                    <div style="background:rgba(250,173,20,0.08); border:1px solid rgba(250,173,20,0.3); border-radius:4px; padding:8px; margin-top:10px; font-size:10px; color:#d48806; line-height:1.4;">
+                        💡 <strong>Fluxo Human-in-the-Loop</strong>:<br>
+                        1. Pause o vídeo no frame com erros da IA.<br>
+                        2. A IA gera as caixas previstas.<br>
+                        3. Edite as caixas erradas ou clique em <em>Deletar Todas</em> para refazer do zero.<br>
+                        4. Pressione <em>Salvar (Ctrl+S)</em> para gravar o Ground Truth e re-treinar a IA.
+                    </div>
+                </div>
+
+                <!-- TAB 4: DATASET & FONTES (VÍDEO GRAVADO vs AO VIVO vs IMPORTAÇÃO) -->
                 <div class="tab-pane" id="pane-dataset">
                     <!-- IMPORTAR DATASET EXISTENTE -->
                     <div style="background:rgba(82,196,26,0.08); padding:10px; border-radius:4px; border:1px solid rgba(82,196,26,0.3); margin-bottom:8px;">
@@ -1914,7 +2014,9 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         async function getCurrentFrameBase64() {
             if (sourceMode === 'live') {
                 if (isLiveFrozen && frozenLiveImage) return frozenLiveImage;
-                const res = await fetch('/api/live_raw_snapshot');
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+                const res = await fetch(`/api/${currentDomain}/live_raw_snapshot`);
                 const d = await res.json();
                 if (d.status === 'ok') {
                     frozenLiveImage = d.image_base64;
@@ -1932,51 +2034,226 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             return offCanvas.toDataURL('image/jpeg', 0.95);
         }
 
-        // AUTO-ANOTAÇÃO COM IA (ACTIVE LEARNING)
-        document.getElementById('btn-ai-auto').onclick = async () => {
-            showToast('🤖 Executando inferência do modelo IA no frame...');
+        // ====================================================
+        // GESTÃO DO MODELO DE IA ATRELADO & ACTIVE LEARNING
+        // ====================================================
+        let availableAiModels = [];
+        let activeModelId = 'yolo11n';
+        let aiConfThreshold = 0.20;
+        let autoAiOnPause = true;
+        let isAiInferring = false;
+
+        async function loadAiModels() {
+            try {
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+                const res = await fetch(`/api/annotation/models?domain=${currentDomain}`);
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    availableAiModels = d.models || [];
+                    activeModelId = d.active_model_id || (availableAiModels.length > 0 ? availableAiModels[0].id : 'yolo11n');
+
+                    const selHeader = document.getElementById('select-ai-model-header');
+                    const selSidebar = document.getElementById('select-ai-model-sidebar');
+
+                    [selHeader, selSidebar].forEach(sel => {
+                        if (!sel) return;
+                        sel.innerHTML = '';
+                        availableAiModels.forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.id;
+                            opt.text = `${m.name} (${m.framework || 'PyTorch'})`;
+                            if (m.id === activeModelId) opt.selected = true;
+                            sel.appendChild(opt);
+                        });
+                    });
+
+                    updateAiModelDisplay();
+                }
+            } catch (err) {
+                console.error("Erro ao carregar modelos de IA:", err);
+            }
+        }
+
+        function updateAiModelDisplay() {
+            const m = availableAiModels.find(item => item.id === activeModelId);
+            const mName = m ? m.name : activeModelId;
+            const badge = document.getElementById('canvas-ai-badge');
+            if (badge) badge.innerText = `🤖 IA: ${mName.slice(0, 16)} (${Math.round(aiConfThreshold * 100)}%)`;
+            const desc = document.getElementById('ai-model-description');
+            if (desc && m) desc.innerText = m.description || `Modelo ${m.name} acoplado para auto-rotulagem de alvos.`;
+        }
+
+        function onAiModelChanged(newModelId) {
+            activeModelId = newModelId;
+            const selH = document.getElementById('select-ai-model-header');
+            const selS = document.getElementById('select-ai-model-sidebar');
+            if (selH && selH.value !== newModelId) selH.value = newModelId;
+            if (selS && selS.value !== newModelId) selS.value = newModelId;
+            updateAiModelDisplay();
+            showToast(`🤖 Modelo de IA selecionado: ${newModelId}`);
+        }
+
+        if (document.getElementById('select-ai-model-header')) {
+            document.getElementById('select-ai-model-header').addEventListener('change', (e) => onAiModelChanged(e.target.value));
+        }
+        if (document.getElementById('select-ai-model-sidebar')) {
+            document.getElementById('select-ai-model-sidebar').addEventListener('change', (e) => onAiModelChanged(e.target.value));
+        }
+
+        // Slider de Confiança
+        const sliderConf = document.getElementById('slider-ai-conf');
+        const displayConf = document.getElementById('display-ai-conf');
+        if (sliderConf) {
+            sliderConf.addEventListener('input', (e) => {
+                aiConfThreshold = parseFloat(e.target.value) || 0.20;
+                if (displayConf) displayConf.innerText = `${Math.round(aiConfThreshold * 100)}%`;
+                updateAiModelDisplay();
+            });
+        }
+
+        // Toggle Auto-IA ao Pausar
+        function toggleAutoAi() {
+            autoAiOnPause = !autoAiOnPause;
+            const btn = document.getElementById('btn-toggle-auto-ai');
+            const chk = document.getElementById('check-auto-ai-pause');
+            if (btn) {
+                btn.className = `mode-btn ${autoAiOnPause ? 'active' : ''}`;
+                btn.innerText = autoAiOnPause ? '⚡ Auto-IA: ON' : '⚡ Auto-IA: OFF';
+            }
+            if (chk) chk.checked = autoAiOnPause;
+            showToast(`Auto-IA ao pausar frame: ${autoAiOnPause ? 'ATIVADA' : 'DESATIVADA'}`);
+        }
+
+        if (document.getElementById('btn-toggle-auto-ai')) {
+            document.getElementById('btn-toggle-auto-ai').onclick = toggleAutoAi;
+        }
+        if (document.getElementById('check-auto-ai-pause')) {
+            document.getElementById('check-auto-ai-pause').addEventListener('change', (e) => {
+                autoAiOnPause = e.target.checked;
+                const btn = document.getElementById('btn-toggle-auto-ai');
+                if (btn) {
+                    btn.className = `mode-btn ${autoAiOnPause ? 'active' : ''}`;
+                    btn.innerText = autoAiOnPause ? '⚡ Auto-IA: ON' : '⚡ Auto-IA: OFF';
+                }
+                showToast(`Auto-IA ao pausar frame: ${autoAiOnPause ? 'ATIVADA' : 'DESATIVADA'}`);
+            });
+        }
+
+        // INFERÊNCIA DO MODELO DE IA NO FRAME
+        async function runAiAutoDetect(isAutomated = false) {
+            if (isAiInferring) return;
+            // Se for automatizado ao pausar e já houver anotações feitas/editadas, não sobrepõe
+            if (isAutomated && (boxes.length > 0 || polygons.length > 0)) {
+                return;
+            }
+
+            isAiInferring = true;
+            if (!isAutomated) {
+                showToast(`🤖 Executando inferência do modelo [${activeModelId}] no frame...`);
+            }
+
             try {
                 const base64Data = await getCurrentFrameBase64();
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+
                 const res = await fetch('/api/annotation/auto_detect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image_base64: base64Data })
+                    body: JSON.stringify({
+                        image_base64: base64Data,
+                        model_id: activeModelId,
+                        conf: aiConfThreshold,
+                        domain: currentDomain
+                    })
                 });
                 const d = await res.json();
                 if (d.status === 'ok' && d.detections && d.detections.length > 0) {
+                    boxes = [];
+                    polygons = [];
                     d.detections.forEach(det => {
                         const [x1, y1, x2, y2] = det.bbox;
+                        let cid = det.class_id !== undefined ? det.class_id : activeClassId;
+                        let cname = det.class_name || (CVAT_CLASSES[cid] ? CVAT_CLASSES[cid].name : 'objeto');
+
                         boxes.push({
-                            id: 'box_' + Date.now().toString().slice(-5),
+                            id: 'box_' + Date.now().toString().slice(-5) + '_' + Math.floor(Math.random()*1000),
                             type: 'bbox',
-                            class_id: det.class_id || 0,
-                            class_name: det.class_name || CVAT_CLASSES[0].name,
-                            x1: x1, y1: y1, x2: x2, y2: y2,
+                            class_id: cid,
+                            class_name: cname,
+                            x1: Math.round(x1),
+                            y1: Math.round(y1),
+                            x2: Math.round(x2),
+                            y2: Math.round(y2),
+                            confidence: det.confidence || 0.85,
+                            source_model: det.source_model || activeModelId,
                             hidden: false
                         });
                     });
-                    selectedItem = { type: 'bbox', index: boxes.length - 1 };
+
+                    selectedItem = { type: 'bbox', index: 0 };
                     renderObjectsList();
                     redrawCanvas();
-                    showToast(`🤖 ${d.detections.length} caixa(s) detectada(s) automaticamente!`);
+                    showToast(`🤖 IA [${activeModelId}]: ${d.detections.length} objeto(s) detectado(s)! Edite ou limpe para corrigir erros.`);
                 } else {
-                    showToast('Nenhuma detecção encontrada pela IA neste frame.');
+                    if (!isAutomated) {
+                        showToast(`Nenhuma detecção encontrada pelo modelo [${activeModelId}] com confiança ≥ ${Math.round(aiConfThreshold * 100)}%.`);
+                    }
                 }
             } catch (err) {
-                showToast(`Erro na IA: ${err}`);
+                console.error("Erro na inferência da IA:", err);
+                if (!isAutomated) {
+                    showToast(`Erro na inferência da IA: ${err}`);
+                }
+            } finally {
+                isAiInferring = false;
             }
-        };
+        }
+
+        // DELETAR TODAS AS ANOTAÇÕES DO FRAME
+        function deleteAllAnnotations() {
+            const count = boxes.length + polygons.length;
+            if (count === 0) {
+                showToast('Nenhuma anotação neste frame para deletar.');
+                return;
+            }
+            if (confirm(`Deletar todas as ${count} anotações deste frame e refazer do zero?`)) {
+                boxes = [];
+                polygons = [];
+                currentPolygonPoints = [];
+                selectedItem = null;
+                renderObjectsList();
+                redrawCanvas();
+                showToast('🗑️ Todas as anotações foram removidas! Frame limpo para corrigir os erros da IA.');
+            }
+        }
+
+        // Conecta eventos de botões
+        const bindEl = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+        bindEl('btn-ai-auto', () => runAiAutoDetect(false));
+        bindEl('btn-run-ai-sidebar', () => runAiAutoDetect(false));
+        bindEl('btn-hud-run-ai', () => runAiAutoDetect(false));
+        bindEl('tool-run-ai-left', () => runAiAutoDetect(false));
+        bindEl('canvas-ai-badge', () => runAiAutoDetect(false));
+
+        bindEl('btn-delete-all-boxes', deleteAllAnnotations);
+        bindEl('btn-clear-all-ai', deleteAllAnnotations);
+        bindEl('btn-hud-clear-all', deleteAllAnnotations);
+        bindEl('tool-clear-all', deleteAllAnnotations);
 
         // SALVAR ANOTAÇÃO (BBOX + POLÍGONOS) NO DATASET YOLO & CONTINUAR VÍDEO
         async function saveAnnotationYOLO() {
             if (boxes.length === 0 && polygons.length === 0) {
-                showToast('Desenhe ao menos um objeto (Retângulo ou Polígono) antes de salvar!');
+                showToast('Desenhe ao menos um objeto ou execute a IA antes de salvar!');
                 return;
             }
 
-            showToast('💾 Salvando frame no dataset...');
+            showToast('💾 Gravando frame corrigido no dataset YOLO para re-treinamento da IA...');
             try {
                 const base64Data = await getCurrentFrameBase64();
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
                 const srcLabel = (sourceMode === 'live') ? 'live_santos_camera' : document.getElementById('select-video-source').value;
                 const ts = (sourceMode === 'live') ? Date.now() / 1000 : video.currentTime;
 
@@ -1987,8 +2264,13 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                         image_base64: base64Data,
                         boxes: boxes,
                         polygons: polygons,
+                        domain: currentDomain,
                         source_video: srcLabel,
-                        frame_timestamp: ts
+                        frame_timestamp: ts,
+                        model_used: activeModelId,
+                        is_ai_assisted: true,
+                        human_corrected: true,
+                        notes: `Anotação com auxílio do modelo ${activeModelId} corrigida pelo operador humano.`
                     })
                 });
                 const d = await res.json();
@@ -2007,11 +2289,11 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     // 3. CONTINUAR O VÍDEO AUTOMATICAMENTE
                     if (sourceMode === 'live') {
                         resumeLiveStream();
-                        showToast(`✔ Salvo no rodapé! Transmissão ao vivo retomada.`);
+                        showToast(`✔ Frame Ground Truth salvo no dataset! Transmissão ao vivo retomada.`);
                     } else {
                         video.play();
                         btnPlay.innerText = '⏸';
-                        showToast(`✔ Salvo no rodapé! Reprodução do vídeo continuada.`);
+                        showToast(`✔ Frame Ground Truth salvo no dataset! Reprodução continuada.`);
                     }
                 } else {
                     showToast(`Erro ao salvar: ${d.message || 'Falha'}`);
@@ -2020,7 +2302,8 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 showToast(`Erro de rede: ${err}`);
             }
         }
-        document.getElementById('btn-save-yolo').onclick = saveAnnotationYOLO;
+        bindEl('btn-save-yolo', saveAnnotationYOLO);
+        bindEl('btn-save-corrected-sidebar', saveAnnotationYOLO);
 
         // PUXAR / IMPORTAR DATASET EXISTENTE (.ZIP)
         document.getElementById('input-import-dataset-zip').addEventListener('change', async (e) => {
@@ -2028,6 +2311,9 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             if (!file) return;
             const formData = new FormData();
             formData.append('file', file);
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+            formData.append('domain', currentDomain);
             showToast('📦 Importando dataset ZIP e reconstruindo anotações...');
 
             try {
@@ -2049,7 +2335,9 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         async function deleteAnnotationItem(imageId) {
             if (!confirm('Excluir este frame anotado do dataset?')) return;
             try {
-                const res = await fetch(`/api/annotation/delete/${imageId}`, { method: 'DELETE' });
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+                const res = await fetch(`/api/annotation/delete/${imageId}?domain=${currentDomain}`, { method: 'DELETE' });
                 const d = await res.json();
                 if (d.status === 'ok') {
                     showToast('✔ Frame excluído do dataset.');
@@ -2063,7 +2351,9 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         // CARREGA ESTATÍSTICAS E GALERIA DO DATASET (SIDEBAR & FILMSTRIP INFERIOR)
         async function loadDatasetStats() {
             try {
-                const res = await fetch('/api/annotation/list');
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+                const res = await fetch(`/api/annotation/list?domain=${currentDomain}`);
                 const d = await res.json();
                 const totalImgs = d.total_images || 0;
                 const totalObjs = (d.total_boxes || 0) + (d.total_polygons || 0);
@@ -2076,7 +2366,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 const filmstrip = document.getElementById('bottom-filmstrip-list');
                 if (filmstrip) {
                     if (!d.items || d.items.length === 0) {
-                        filmstrip.innerHTML = '<span style="font-size:11px; color:var(--cvat-text-disabled); padding-left:6px;">Nenhum frame salvo ainda. Pressione Salvar (Ctrl+S) após anotar.</span>';
+                        filmstrip.innerHTML = '<span style="font-size:11px; color:var(--cvat-text-disabled); padding-left:6px;">Nenhum frame salvo ainda. Pressione Salvar (Ctrl+S) após anotar ou corrigir.</span>';
                     } else {
                         filmstrip.innerHTML = '';
                         d.items.forEach((item, idx) => {
@@ -2121,18 +2411,30 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 console.error("Erro ao carregar estatísticas do dataset:", err);
             }
         }
-            }
-        }
 
-        // CARREGA ANOTAÇÃO EXISTENTE NO CANVAS PARA CONTINUAR
+        // CARREGA ANOTAÇÃO EXISTENTE NO CANVAS PARA CONTINUAR / REVISAR
         async function loadExistingAnnotation(imageId) {
             showToast('Carregando frame salvo para edição...');
             try {
-                const res = await fetch(`/api/annotation/load/${imageId}`);
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+                const res = await fetch(`/api/annotation/load/${imageId}?domain=${currentDomain}`);
                 const d = await res.json();
                 if (d.status === 'ok') {
-                    // Configura canvas no modo imagem
-                    setSourceMode('live');
+                    // Configura visualizador no modo imagem do frame salvo
+                    if (sourceMode !== 'live') {
+                        document.getElementById('mode-btn-video').classList.remove('active');
+                        document.getElementById('mode-btn-live').classList.add('active', 'live-active');
+                        video.style.display = 'none';
+                        liveImg.style.display = 'block';
+                        document.getElementById('header-frame-nav').style.display = 'none';
+                        document.getElementById('player-bar-recorded').style.display = 'none';
+                        document.getElementById('player-bar-live').style.display = 'flex';
+                        document.getElementById('section-recorded-video').style.display = 'none';
+                        document.getElementById('section-live-video').style.display = 'flex';
+                        sourceMode = 'live';
+                    }
+
                     liveImg.src = d.image_url;
                     frozenLiveImage = d.image_url;
                     isLiveFrozen = true;
@@ -2144,6 +2446,11 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
 
                     renderObjectsList();
                     redrawCanvas();
+
+                    document.getElementById('btn-toggle-live-freeze').innerText = '▶ Retomar Transmissão ao Vivo';
+                    document.getElementById('btn-toggle-live-freeze').className = 'cvat-btn primary';
+                    document.getElementById('live-stream-status-msg').innerText = `⏸ Frame #${imageId} Carregado (${d.filename})`;
+                    document.getElementById('live-stream-status-msg').style.color = 'var(--cvat-accent)';
                     document.getElementById('current-video-title').innerText = `Dataset: ${d.filename}`;
                     showToast(`✔ Frame carregado: ${boxes.length} caixas, ${polygons.length} polígonos.`);
                 }
@@ -2199,6 +2506,12 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             if (e.code === 'Space') {
                 e.preventDefault();
                 togglePlay();
+            } else if (e.code === 'KeyA') {
+                e.preventDefault();
+                runAiAutoDetect(false);
+            } else if ((e.altKey && e.code === 'KeyC') || (e.ctrlKey && e.shiftKey && e.code === 'Delete')) {
+                e.preventDefault();
+                deleteAllAnnotations();
             } else if (e.code === 'KeyD' || e.code === 'BracketLeft') {
                 stepFrame(-1);
             } else if (e.code === 'KeyF' || e.code === 'BracketRight') {
@@ -2238,7 +2551,15 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             document.getElementById('shortcuts-modal').style.display = 'flex';
         };
 
+        // Auto-execução ao pausar vídeo
+        video.addEventListener('pause', () => {
+            if (sourceMode === 'video' && autoAiOnPause && boxes.length === 0 && polygons.length === 0) {
+                setTimeout(() => runAiAutoDetect(true), 150);
+            }
+        });
+
         // Inicialização
+        loadAiModels();
         loadClassSets();
         renderObjectsList();
         loadDatasetStats();

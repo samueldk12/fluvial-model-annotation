@@ -1,4 +1,4 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -44,6 +44,8 @@ venv.bak/
 flask_server.log
 *.tmp
 *.bin
+scripts/*.txt
+
 
 # Heavy datasets and raw data
 datasets/
