@@ -1,0 +1,29 @@
+{
+  "id": "pre_arch_production",
+  "name": "Pré-Arquitetura: Produção Multi-Domínio (Ensemble)",
+  "description": "Arquitetura base de produção: fusão consensual SAR (MeWan2808) + SixOpen Y8Naval (ONNX) + COCO + Segmentação eWaSR + Memória Espacial 4.0s + ViT Re-ID 768D.",
+  "version": "1.0.0",
+  "is_production": true,
+  "pipeline_config": {
+    "active_model_id": "ensemble_full",
+    "conf_threshold": 0.15,
+    "iou_threshold": 0.45,
+    "enable_night_enhancement": true,
+    "enable_spatial_memory": true,
+    "enable_water_segmentation": true,
+    "enable_vit_reid": true,
+    "enable_ocr": true,
+    "min_vessel_size_px": 16
+  },
+  "ensemble_weights": {
+    "mewan2808_sar": 0.4,
+    "sixopen_y8naval": 0.35,
+    "coco_generic": 0.25
+  },
+  "spatial_memory_params": {
+    "spatial_gate_radius": 60.0,
+    "memory_retention_time": 4.0,
+    "reid_cosine_threshold": 0.92,
+    "stationary_dist_threshold": 12.0
+  }
+}

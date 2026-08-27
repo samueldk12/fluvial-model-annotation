@@ -1,0 +1,28 @@
+{
+  "id": "test_arch_experimental",
+  "name": "Arquitetura de Teste: YOLO11n + YOLO26n Edge Ultra-Rápido",
+  "description": "Nova arquitetura experimental projetada para teste de alta taxa de quadros (FPS), baixa latência (<15ms) e validação rápida em hardware edge com atenção C3k2.",
+  "version": "2.0.0-test",
+  "is_production": false,
+  "pipeline_config": {
+    "active_model_id": "yolo11n",
+    "conf_threshold": 0.2,
+    "iou_threshold": 0.5,
+    "enable_night_enhancement": false,
+    "enable_spatial_memory": true,
+    "enable_water_segmentation": false,
+    "enable_vit_reid": false,
+    "enable_ocr": false,
+    "min_vessel_size_px": 12
+  },
+  "ensemble_weights": {
+    "yolo11n": 0.6,
+    "yolo26n": 0.4
+  },
+  "spatial_memory_params": {
+    "spatial_gate_radius": 45.0,
+    "memory_retention_time": 2.5,
+    "reid_cosine_threshold": 0.85,
+    "stationary_dist_threshold": 10.0
+  }
+}

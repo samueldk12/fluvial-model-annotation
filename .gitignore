@@ -1,0 +1,86 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# IDE / Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and temporary files
+*.log
+flask_server.log
+*.tmp
+*.bin
+
+# Heavy datasets and raw data
+datasets/
+data/
+checkpoints/
+extra_models/
+static/*.mp4
+static/*.avi
+static/*.mkv
+
+# Model weights & binary files
+*.pt
+*.pth
+*.onnx
+*.engine
+*.weights
+*.pkl
+*.h5
+
+# Keep architecture presets
+!models/architecture_presets/
+!models/architecture_presets/*.json
+
+# Exclude specific heavy model folders
+models/01_satellite_and_aerial_naval/
+models/02_sar_radar_and_edge/
+models/03_vessel_transformers/
+models/custom_uploaded/
+
+# Temporary run/test images in root
+live_now*.jpg
+live_ship.jpg
+boat_crop.jpg
+ewasr_test_*.jpg
+result_annotated*.jpg
+sobre_example_*.jpg
+
+# OS generated
+.DS_Store
+Thumbs.db
