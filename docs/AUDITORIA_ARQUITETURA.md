@@ -62,24 +62,32 @@ primeiro frame real chegar via polling JS. Trocados por "Aguardando dados..."
 neutro. Verificado ao vivo: `curl http://127.0.0.1:5000/urbano` já não contém
 nenhum dos textos fabricados antigos.
 
-## 🟠 Regressões no pipeline naval (PENDENTE)
+## 🟠 Regressões no pipeline naval (PARCIALMENTE RESOLVIDO)
 
 `src/pipeline/pluggable_pipeline.py` reimplementou a detecção sem usar mais
-`vessel_ensemble_engine.py`, e no caminho perdeu 3 salvaguardas validadas nesta sessão:
+`vessel_ensemble_engine.py`, e no caminho perdeu salvaguardas validadas nesta sessão:
 
+- ~~`is_plausible_vessel_size` é importado no topo do arquivo mas **nunca chamado**
+  — sem teto de tamanho contra caixas degeneradas/sprawling.~~ **CORRIGIDO** —
+  achado ao vivo no benchmark de 100 frames (4 transmissões reais): a faixa de
+  marca d'água/overlay de identificação da câmera do vídeo de Galveston (não um
+  casco) foi detectada como "embarcação" — metade da caixa ainda tocava água de
+  verdade, o suficiente pra passar no filtro de segmentação de água — e o OCR
+  leu o texto do overlay da transmissão como se fosse nome de barco (`"WINDGW"`,
+  garble de "WINDOW SEAT"). `is_plausible_vessel_size()` agora é chamado no
+  filtro antes do NMS; a caixa de 742px de largura (acima do teto de 650px)
+  passou a ser rejeitada. Ver commit `44803e5`.
 - `night_frame` (visão noturna) é calculado em `process_frame()` mas **nunca
-  usado** depois — o consenso dia/noite não roda mais.
+  usado** depois — o consenso dia/noite não roda mais. Ainda pendente.
 - Score de Laplaciano (anti-reflexo) é calculado (`lap_score`) e guardado no dict
-  de saída, mas **nunca comparado a um limiar** — não rejeita mais nada.
-- `is_plausible_vessel_size` é importado no topo do arquivo mas **nunca chamado**
-  — sem teto de tamanho contra caixas degeneradas/sprawling.
+  de saída, mas **nunca comparado a um limiar** — não rejeita mais nada. Ainda pendente.
 - `conf_threshold` default é 0.05, mais permissivo que qualquer valor validado
-  nesta sessão (0.12–0.20), o que piora o impacto dos itens acima.
+  nesta sessão (0.12–0.20). Ainda pendente.
 
-**Fix recomendado:** dentro de `process_frame()`, usar `night_frame` num segundo
-passe de detecção quando `is_night_or_low_light(frame_bgr)` for verdadeiro (como
-`vessel_ensemble_engine.run_ensemble` já fazia), aplicar `edge_score >= 0.35` como
-filtro real, e chamar `is_plausible_vessel_size()` nos candidatos antes do NMS.
+**Fix recomendado (itens restantes):** dentro de `process_frame()`, usar
+`night_frame` num segundo passe de detecção quando `is_night_or_low_light(frame_bgr)`
+for verdadeiro (como `vessel_ensemble_engine.run_ensemble` já fazia), e aplicar
+`edge_score >= 0.35` como filtro real de Laplaciano.
 
 ## 🟢 Nome não bate com o que roda — RESOLVIDO (WBF + BoT-SORT + DINOv2 + IMO OCR agora reais)
 
