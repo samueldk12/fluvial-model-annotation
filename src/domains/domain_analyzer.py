@@ -81,7 +81,10 @@ class DomainVisionAnalyzer:
                         xyxy = box.xyxy[0].cpu().numpy().tolist()
 
                         # Filtra classes relevantes para o domínio se houver restrição
-                        if self.filter_classes and cls_id not in self.filter_classes and self.domain_id not in ["tatuagens", "digitais"]:
+                        # (a excecao para tatuagens/digitais existia so pra deixar
+                        # passar os class_id fabricados pelos detectores removidos
+                        # acima; sem eles, filtra igual aos outros dominios)
+                        if self.filter_classes and cls_id not in self.filter_classes:
                             continue
 
                         detections.append({
@@ -93,15 +96,12 @@ class DomainVisionAnalyzer:
             except Exception as e:
                 print(f"[{self.domain_id}] Erro no YOLO: {e}")
 
-        # Se for domínio específico de tatuagens ou digitais, aplica detectores especializados
-        if self.domain_id == "tatuagens":
-            detections = self._detect_tattoos(frame_bgr, detections)
-        elif self.domain_id == "digitais":
-            detections = self._detect_fingerprints(frame_bgr, detections)
-
-        # Se nenhuma detecção for encontrada em simulação/teste, gera detecções heurísticas para visualização rica
-        if not detections and w >= 200 and h >= 200:
-            detections = self._fallback_domain_detections(frame_bgr)
+        # NOTA: este bloco chamava _detect_tattoos()/_detect_fingerprints() (contorno
+        # e cantos genericos rotulados como "tatuagem"/"minucia" sem base real) e, se
+        # nada fosse encontrado, _fallback_domain_detections() inventava caixas fixas
+        # com confianca hardcoded (ex: "carro" a 0.91 sempre na mesma posicao) so pra
+        # a tela nao ficar vazia. Removido: um "0 detectados" honesto vale mais que
+        # uma detecção decorativa. Ver docs/AUDITORIA_ARQUITETURA.md.
 
         # 2. Análise Semântica da Cena
         semantics = self._extract_scene_semantics(frame_bgr, detections)
@@ -197,136 +197,64 @@ class DomainVisionAnalyzer:
 
         elif self.domain_id == "urbano":
             num_vehicles = len(detections)
-            densidade = "CRÍTICA (92%)" if num_vehicles > 8 else ("MODERADA (65%)" if num_vehicles > 3 else "FLUIDA (22%)")
+            densidade_pct = min(100.0, num_vehicles / 10.0 * 100.0)
+            densidade = "CRÍTICA" if num_vehicles > 8 else ("MODERADA" if num_vehicles > 3 else "FLUIDA")
             return {
-                "densidade_trafego": densidade,
-                "fluxo_pedestres": "FAIXA SEGURA (Monitorado)",
-                "estado_semaforo": "FLUXO CONTÍNUO (Verde)"
+                "densidade_trafego": f"{densidade} ({densidade_pct:.0f}%, {num_vehicles} veículos)",
+                "fluxo_pedestres": "N/D (sem sensor de faixa)",
+                "estado_semaforo": "N/D (sem detector de semáforo)"
             }
 
         elif self.domain_id == "fechado":
             num_people = sum(1 for d in detections if d.get("class_name") in ["person", "pessoa"])
             return {
-                "taxa_ocupacao": f"{max(num_people, 2)} / 10 Pessoas (Ocupação Normal)",
-                "estado_portas": "PORTA PRINCIPAL: FECHADA (Segura)",
-                "seguranca_indoor": "AMBIENTE SEGURO / NORMAL"
+                "taxa_ocupacao": f"{num_people} pessoa(s) detectada(s)",
+                "estado_portas": "N/D (sem sensor de porta)",
+                "seguranca_indoor": "N/D (sem análise de segurança)"
             }
 
         elif self.domain_id == "natureza":
             hsv = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
             green_mask = cv2.inRange(hsv, (30, 40, 20), (85, 255, 255))
             green_pct = float(np.sum(green_mask > 0) / (h * w) * 100.0)
+            especies_distintas = len(set(d.get("class_name", "") for d in detections))
             return {
-                "cobertura_vegetal": f"{max(green_pct, 65.0):.1f}% (Copa Densa)",
-                "indice_biodiversidade": f"{len(detections) + 3} Espécies Registradas",
-                "alerta_ambiental": "NORMAL (Sem Focos de Fogo)"
+                "cobertura_vegetal": f"{green_pct:.1f}% da cena",
+                "indice_biodiversidade": f"{especies_distintas} espécie(s) distinta(s) detectada(s)" if especies_distintas else "0 detectado",
+                "alerta_ambiental": "N/D (sem detector de fogo/fumaça)"
             }
 
         elif self.domain_id == "objetos":
+            tipos_distintos = len(set(d.get("class_name", "") for d in detections))
             return {
-                "contagem_esteira": f"{len(detections) * 12 + 24} peças / min",
-                "conformidade_qualidade": "99.8% CONFORME (Sem Avarias)",
-                "diversidade_estoque": f"{max(len(detections), 4)} Tipos de Itens"
+                "contagem_esteira": f"{len(detections)} item(ns) na cena",
+                "conformidade_qualidade": "N/D (sem inspeção de avarias)",
+                "diversidade_estoque": f"{tipos_distintos} tipo(s) de item(ns)" if tipos_distintos else "0 detectado"
             }
 
-        elif self.domain_id == "tatuagens":
-            gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(gray, 60, 180)
-            edge_density = float(np.sum(edges > 0) / (h * w) * 100.0)
+        elif self.domain_id in ("tatuagens", "digitais"):
             return {
-                "cobertura_pele": f"{min(90.0, edge_density * 4.5 + 25.0):.1f}% da Área",
-                "complexidade_traco": "ALTA DENSIDADE (Vetorizado)",
-                "estilo_dominante": "ORIENTAL / BLACKWORK DETALHADO"
+                "aviso": "N/D — sem modelo especializado para este domínio; nenhuma métrica é fabricada"
             }
 
-        elif self.domain_id == "digitais":
-            return {
-                "clareza_cristas": "97.4% EXCELENTE (Alta Resolução)",
-                "contagem_minucias": f"{len(detections) * 8 + 36} Minúcias Válidas",
-                "padrao_primario": "VERTICILO ESPIRAL (Whorl)"
-            }
+        return {}
 
-        return {
-            "status_geral": "NORMAL",
-            "metric_1": "100%",
-            "metric_2": "Ativo"
-        }
-
-    def _detect_tattoos(self, frame_bgr, detections):
-        """Detecção de traços de tatuagens por processamento de contornos dérmicos e textura."""
-        gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray, (5, 5), 0)
-        thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 15, 4)
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        tattoos = []
-        for c in contours:
-            area = cv2.contourArea(c)
-            if area > 1200:
-                x, y, w, h = cv2.boundingRect(c)
-                tattoos.append({
-                    "bbox": [float(x), float(y), float(x + w), float(y + h)],
-                    "class_id": 1,
-                    "class_name": "tatuagem_oriental" if area > 6000 else "tatuagem_blackwork",
-                    "confidence": min(0.98, 0.75 + area / 50000.0)
-                })
-        return tattoos[:6] if tattoos else detections
-
-    def _detect_fingerprints(self, frame_bgr, detections):
-        """Detecção de cristas, minúcias e núcleos em imagens de impressões digitais."""
-        gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
-        h, w = gray.shape
-        
-        # Detecta cantos e bifurcações (Harris Corner)
-        corners = cv2.goodFeaturesToTrack(gray, maxCorners=25, qualityLevel=0.08, minDistance=18)
-        fps = []
-        
-        # Bounding box principal da impressão digital
-        fps.append({
-            "bbox": [float(w * 0.15), float(h * 0.1), float(w * 0.85), float(h * 0.9)],
-            "class_id": 0,
-            "class_name": "impressao_digital",
-            "confidence": 0.99
-        })
-        
-        if corners is not None:
-            for idx, pt in enumerate(corners[:12]):
-                x, y = pt.ravel()
-                bw = 20
-                fps.append({
-                    "bbox": [float(x - bw), float(y - bw), float(x + bw), float(y + bw)],
-                    "class_id": 4 if idx % 2 == 0 else 5,
-                    "class_name": "minucia_bifurcacao" if idx % 2 == 0 else "minucia_terminacao",
-                    "confidence": 0.92
-                })
-        return fps
-
-    def _fallback_domain_detections(self, frame_bgr):
-        """Gera caixas de exemplo realistas caso a imagem não contenha classes COCO identificáveis."""
-        h, w = frame_bgr.shape[:2]
-        dets = []
-        
-        if self.domain_id == "urbano":
-            dets.append({"bbox": [w * 0.1, h * 0.4, w * 0.4, h * 0.8], "class_id": 2, "class_name": "carro", "confidence": 0.91})
-            dets.append({"bbox": [w * 0.5, h * 0.35, w * 0.85, h * 0.85], "class_id": 5, "class_name": "onibus", "confidence": 0.88})
-            dets.append({"bbox": [w * 0.88, h * 0.5, w * 0.96, h * 0.8], "class_id": 0, "class_name": "pedestre", "confidence": 0.85})
-        elif self.domain_id == "fechado":
-            dets.append({"bbox": [w * 0.2, h * 0.3, w * 0.5, h * 0.85], "class_id": 0, "class_name": "pessoa", "confidence": 0.94})
-            dets.append({"bbox": [w * 0.55, h * 0.45, w * 0.8, h * 0.8], "class_id": 56, "class_name": "cadeira", "confidence": 0.89})
-        elif self.domain_id == "natureza":
-            dets.append({"bbox": [w * 0.3, h * 0.35, w * 0.7, h * 0.8], "class_id": 16, "class_name": "mamifero_silvestre", "confidence": 0.93})
-            dets.append({"bbox": [w * 0.75, h * 0.15, w * 0.9, h * 0.4], "class_id": 14, "class_name": "ave_passaro", "confidence": 0.87})
-        elif self.domain_id == "objetos":
-            dets.append({"bbox": [w * 0.15, h * 0.3, w * 0.45, h * 0.75], "class_id": 0, "class_name": "caixa_embalagem", "confidence": 0.96})
-            dets.append({"bbox": [w * 0.55, h * 0.25, w * 0.85, h * 0.8], "class_id": 1, "class_name": "ferramenta", "confidence": 0.92})
-        elif self.domain_id == "tatuagens":
-            dets.append({"bbox": [w * 0.2, h * 0.2, w * 0.8, h * 0.85], "class_id": 1, "class_name": "tatuagem_oriental", "confidence": 0.97})
-        elif self.domain_id == "digitais":
-            dets.append({"bbox": [w * 0.15, h * 0.1, w * 0.85, h * 0.9], "class_id": 0, "class_name": "impressao_digital", "confidence": 0.99})
-        else:
-            dets.append({"bbox": [w * 0.2, h * 0.3, w * 0.8, h * 0.7], "class_id": 8, "class_name": "embarcacao", "confidence": 0.92})
-            
-        return dets
+    # _detect_tattoos, _detect_fingerprints e _fallback_domain_detections foram
+    # REMOVIDOS aqui (nao so desativados): eram deteccao fabricada, nao real.
+    #   - _detect_tattoos: contorno/textura generico (adaptiveThreshold) dispara
+    #     em qualquer superficie com textura (pele, madeira, parede), e a escolha
+    #     de rotulo "oriental" vs "blackwork" era so um limiar arbitrario de area
+    #     de contorno, nao reconhecimento de estilo.
+    #   - _detect_fingerprints: adicionava uma caixa de "impressao_digital" a
+    #     99% de confianca SEMPRE, pra QUALQUER imagem, sem checar se havia
+    #     sequer uma impressao digital na cena; as "minucias" eram cantos
+    #     genericos do goodFeaturesToTrack, que aparecem em qualquer foto.
+    #   - _fallback_domain_detections: quando o YOLO nao achava nada real,
+    #     inventava caixas fixas com confianca hardcoded (ex: "carro" a 0.91,
+    #     sempre na mesma posicao da tela) so pra a interface nao parecer vazia.
+    # Nao existe heuristica de OpenCV confiavel pra "isto e uma tatuagem" ou
+    # "isto e uma digital"; um "0 detectado" honesto e melhor que uma detecção
+    # decorativa. Ver docs/AUDITORIA_ARQUITETURA.md para o registro completo.
 
     def _generate_stable_id(self, idx, det, bbox):
         """Gera ID padronizado com prefixo do domínio."""
@@ -344,46 +272,43 @@ class DomainVisionAnalyzer:
         return f"{prefix}-{num_seed}"
 
     def _resolve_target_attributes(self, det, idx):
-        """Retorna (Nome, Modelo/Tipo, Categoria/Destino) apropriado para a entidade do domínio."""
+        """Retorna (Nome, Modelo/Tipo, Categoria/Destino) apropriado para a entidade do domínio.
+
+        Usa apenas a classe REAL retornada pelo detector (cname) - nao inventa
+        especificidade que o modelo generico COCO nao determinou (marca/modelo
+        de veiculo, especie de animal, estilo de tatuagem, tipo de minucia
+        biometrica). Antes isso era fabricado: qualquer "car" virava "Sedan
+        Médio / SUV" e qualquer "bird" virava "Tucano/Gavião", por exemplo -
+        seguro/especifico demais pra o que um YOLO de 80 classes realmente sabe.
+        """
         cname = det.get("class_name", "").lower()
-        
+        display_name = cname.replace("_", " ").capitalize() if cname else f"Objeto {idx+1}"
+
+        # Traducoes diretas (mesma classe, so em portugues) - nao adicionam
+        # informacao que o detector nao forneceu.
+        translations = {
+            "car": "Carro", "bus": "Ônibus", "truck": "Caminhão",
+            "person": "Pessoa", "bicycle": "Bicicleta", "motorcycle": "Motocicleta",
+            "bird": "Ave", "dog": "Cão", "cat": "Gato", "horse": "Cavalo",
+            "cow": "Bovino", "sheep": "Ovino", "chair": "Cadeira",
+            "bottle": "Garrafa", "boat": "Embarcação"
+        }
+        display_name = translations.get(cname, display_name)
+
         if self.domain_id == "urbano":
-            names_map = {
-                "carro": ("Automóvel Particular", "Sedan Médio / SUV", "Faixa Central"),
-                "car": ("Automóvel Particular", "Sedan Médio / SUV", "Faixa Central"),
-                "onibus": ("Ônibus Metropolitano", "Transporte Coletivo", "Corredor Exclusivo"),
-                "bus": ("Ônibus Metropolitano", "Transporte Coletivo", "Corredor Exclusivo"),
-                "caminhao": ("Caminhão de Carga", "Veículo Pesado", "Faixa da Direita"),
-                "truck": ("Caminhão de Carga", "Veículo Pesado", "Faixa da Direita"),
-                "pedestre": ("Pedestre em Trânsito", "Vulnerável / Calçada", "Travessia Segura"),
-                "person": ("Pedestre em Trânsito", "Vulnerável / Calçada", "Travessia Segura")
-            }
-            return names_map.get(cname, (f"Veículo Urbano {idx+1}", "Transporte", "Via Pública"))
-
+            return (f"{display_name} {idx+1}", display_name, "Via Pública")
         elif self.domain_id == "fechado":
-            if "person" in cname or "pessoa" in cname:
-                return (f"Colaborador {idx+1}", "Ocupante Ativo", "Estação de Trabalho")
-            return (f"Mobiliário {idx+1}", cname.capitalize(), "Ambiente Interno")
-
+            return (f"{display_name} {idx+1}", display_name, "Ambiente Interno")
         elif self.domain_id == "natureza":
-            if "bird" in cname or "ave" in cname:
-                return ("Ave Silvestre (Tucano/Gavião)", "Fauna Aérea", "Copa das Árvores")
-            return ("Mamífero Silvestre (Cervo/Onça)", "Fauna Terrestre", "Trilha Ecológica")
-
+            return (f"{display_name} {idx+1}", display_name, "Trilha Ecológica")
         elif self.domain_id == "objetos":
-            return (f"Item de Linha {idx+1}", cname.capitalize(), "Inspeção de Qualidade")
-
+            return (f"Item {idx+1}", display_name, "Inspeção de Qualidade")
         elif self.domain_id == "tatuagens":
-            return ("Arte Dérmica Vetorizada", "Estilo Oriental / Blackwork", "Braço / Antebraço")
-
+            return (f"{display_name} {idx+1}", display_name, "Sem classificador dedicado de tatuagem")
         elif self.domain_id == "digitais":
-            if "bifurcacao" in cname:
-                return ("Minúcia de Galton", "Bifurcação de Crista", "Quadrante Central")
-            elif "terminacao" in cname:
-                return ("Minúcia de Galton", "Terminação de Crista", "Quadrante Periférico")
-            return ("Impressão Papiloscópica", "Verticilo Espiral", "Polegar / Indicador")
+            return (f"{display_name} {idx+1}", display_name, "Sem classificador dedicado de biometria")
 
-        return ("Embarcação Marítima", "Navio Porta-Contêineres", "Canal de Santos")
+        return (f"{display_name} {idx+1}", display_name, "Canal de Santos")
 
     def _compute_speed(self, trail):
         if len(trail) < 2:
@@ -461,7 +386,7 @@ class DomainVisionAnalyzer:
         cv2.rectangle(hud_bg, (0, 0), (w, 38), (8, 12, 18), -1)
         cv2.addWeighted(hud_bg, 0.7, canvas, 0.3, 0, canvas)
         
-        badge_text = f"{self.config.get('icon', '🔍')} {self.config.get('name', 'Sistema').upper()} | TELEMETRIA ATIVA"
+        badge_text = f"[{self.domain_id.upper()}] {self.config.get('name', 'Sistema').upper()} | TELEMETRIA ATIVA"
         cv2.putText(canvas, badge_text, (12, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.48, accent_bgr, 2, cv2.LINE_AA)
         
         info_text = f"DETECÇÕES: {len(targets)} | LATÊNCIA: {self.last_latency_ms:.1f}ms | GPU DIRECTML"

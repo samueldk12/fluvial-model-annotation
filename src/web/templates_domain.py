@@ -288,7 +288,7 @@ def get_domain_monitoring_html(domain_id="naval"):
 <body>
     <!-- DOMAIN NAVIGATION TABS -->
     <nav class="domain-navbar">
-        <a href="/" class="home-tab">🏠 Hub Inicial</a>
+        <a href="/" class="home-tab"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Hub Inicial</a>
         {domain_nav_items}
     </nav>
 
@@ -309,8 +309,8 @@ def get_domain_monitoring_html(domain_id="naval"):
                 <span class="status-dot"></span>
                 <span id="system_status">VIGILÂNCIA ATIVA</span>
             </div>
-            <a href="/{dom_id}/anotar" class="topbar-btn primary">✏️ Estúdio CVAT ({dom_name.split('&')[0].strip()})</a>
-            <a href="/{dom_id}/sobre" class="topbar-btn">📖 Documentação</a>
+            <a href="/{dom_id}/anotar" class="topbar-btn primary"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio CVAT ({dom_name.split('&')[0].strip()})</a>
+            <a href="/{dom_id}/sobre" class="topbar-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
         </div>
     </header>
 
@@ -321,26 +321,26 @@ def get_domain_monitoring_html(domain_id="naval"):
             <!-- Fonte de Vídeo -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📡 Fonte de Transmissão</span>
+                    <span class="card-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12" y2="20.01"/></svg>Fonte de Transmissão</span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Stream YouTube / Câmera IP:</label>
                     <input type="text" id="stream_url" class="text-input" value="{default_youtube_url}">
                 </div>
-                <button class="btn-action highlight" onclick="switchStream()">⚡ Conectar Câmera / Stream</button>
-                <button class="btn-action" onclick="takeSnapshot()">📸 Capturar Snapshot HD</button>
+                <button class="btn-action highlight" onclick="switchStream()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Conectar Câmera / Stream</button>
+                <button class="btn-action" onclick="takeSnapshot()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Capturar Snapshot HD</button>
                 
                 <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);">
                     <label class="form-label">Analisar Foto Local:</label>
                     <input type="file" id="file_upload" accept="image/*,video/*" style="display:none;" onchange="uploadMedia(this)">
-                    <button class="btn-action" onclick="document.getElementById('file_upload').click()">📁 Carregar Arquivo de Imagem</button>
+                    <button class="btn-action" onclick="document.getElementById('file_upload').click()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Carregar Arquivo de Imagem</button>
                 </div>
             </div>
 
             <!-- Semântica da Cena -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">🌐 Semântica da Cena</span>
+                    <span class="card-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Semântica da Cena</span>
                 </div>
                 {sem_boxes_html}
             </div>
@@ -348,11 +348,11 @@ def get_domain_monitoring_html(domain_id="naval"):
             <!-- Alvo em Foco -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">🎯 Alvo / Entidade em Foco</span>
+                    <span class="card-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Alvo / Entidade em Foco</span>
                 </div>
                 {target_boxes_html}
                 <div class="status-alert-box" id="reid_status_box">
-                    ✓ RASTREAMENTO CINEMÁTICO ATIVO
+                    RASTREAMENTO CINEMÁTICO ATIVO
                 </div>
             </div>
         </div>
@@ -378,11 +378,11 @@ def get_domain_monitoring_html(domain_id="naval"):
         <div class="col-stack">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📋 {registry_title}</span>
-                    <button class="topbar-btn" style="padding: 2px 6px; font-size: 10px;" onclick="refreshRegistry()">🔄</button>
+                    <span class="card-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>{registry_title}</span>
+                    <button class="topbar-btn" style="padding: 2px 6px; font-size: 10px;" onclick="refreshRegistry()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="filter_registry" class="text-input" placeholder="🔍 Filtrar registros por ID ou nome..." onkeyup="filterTable()">
+                    <input type="text" id="filter_registry" class="text-input" placeholder="Filtrar registros por ID ou nome..." onkeyup="filterTable()">
                 </div>
                 <div class="table-wrap">
                     <table id="registry_table">

@@ -1,13 +1,13 @@
 {
   "id": "pre_arch_production",
-  "name": "Pré-Arquitetura: Produção Multi-Domínio (Ensemble)",
-  "description": "Arquitetura base de produção: fusão consensual SAR (MeWan2808) + SixOpen Y8Naval (ONNX) + COCO + Segmentação eWaSR + Memória Espacial 4.0s + ViT Re-ID 768D.",
-  "version": "1.0.0",
+  "name": "Arquitetura de Produção: Ensemble Multi-Domínio (WBF + BoT-SORT + DINOv2 + IMO OCR)",
+  "description": "Arquitetura oficial de produção: Fusão WBF (SAR MeWan2808 + SixOpen Y8Naval + COCO), Tiling na calha distante, Classificador Probabilístico 17D com Fundo Mediana, Rastreamento BoT-SORT com Âncora Histerese, DINOv2 Re-ID com Galeria HNSW e Validação Matemática IMO.",
+  "version": "2.0.0-production",
   "is_production": true,
   "pipeline_config": {
     "active_model_id": "ensemble_full",
-    "conf_threshold": 0.15,
-    "iou_threshold": 0.45,
+    "conf_threshold": 0.05,
+    "iou_threshold": 0.35,
     "enable_night_enhancement": true,
     "enable_spatial_memory": true,
     "enable_water_segmentation": true,

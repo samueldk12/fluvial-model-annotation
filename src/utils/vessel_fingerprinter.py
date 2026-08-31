@@ -13,6 +13,10 @@ import math
 import re
 from PIL import Image
 
+from src.ocr.imo_validator import IMOValidator
+from src.ocr.hull_rectifier import HullPerspectiveRectifier
+
+
 class VesselFingerprintExtractor:
     def __init__(self):
         self.ocr_reader = None
@@ -28,54 +32,49 @@ class VesselFingerprintExtractor:
             print(f"[OCR] EasyOCR inicialização em segundo plano / fallback ativo: {e}")
             self.ocr_reader = None
 
-    def extract_hull_text(self, vessel_crop_bgr):
-        """
-        Detecta e extrai textos estampados no casco, proa, popa ou superestrutura.
-        Procura por Nomes de Navios, Números IMO (ex: IMO 9384712) e Prefixos Náuticos.
-        """
+        self.rectifier = HullPerspectiveRectifier()
+        self.validator = IMOValidator()
+
+    def extract_hull_text(self, vessel_crop_bgr, enable_ocr=True):
+        if not enable_ocr:
+            return {"raw_texts": [], "detected_name": None, "imo_number": None, "ocr_attempted": False}
         if vessel_crop_bgr is None or vessel_crop_bgr.size == 0:
-            return {"raw_texts": [], "detected_name": None, "imo_number": None}
+            return {"raw_texts": [], "detected_name": None, "imo_number": None, "ocr_attempted": True}
 
         h, w = vessel_crop_bgr.shape[:2]
-        if h < 30 or w < 30:
-            return {"raw_texts": [], "detected_name": None, "imo_number": None}
+        if h < 20 or w < 20:
+            return {"raw_texts": [], "detected_name": None, "imo_number": None, "ocr_attempted": True}
 
+        enhanced_crop = self.rectifier.rectify_and_enhance(vessel_crop_bgr, upscale_factor=2.0)
         detected_texts = []
-        
-        # 1. Tentativa via EasyOCR se disponível
+
         if self.ocr_reader is not None:
             try:
-                # Realce de contraste para texto náutico
-                gray = cv2.cvtColor(vessel_crop_bgr, cv2.COLOR_BGR2GRAY)
-                clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-                contrast_gray = clahe.apply(gray)
-                
-                results = self.ocr_reader.readtext(contrast_gray)
+                results = self.ocr_reader.readtext(enhanced_crop)
                 for res in results:
                     text_str = res[1].strip()
                     conf = float(res[2])
-                    if conf > 0.30 and len(text_str) >= 3:
+                    if conf > 0.25 and len(text_str) >= 3:
                         detected_texts.append(text_str)
-            except Exception as e:
+            except Exception:
                 pass
 
-        # 2. Análise de padrões com Regex (IMO / Nomes náuticos)
         imo_num = None
         cleaned_name = None
 
         for t in detected_texts:
             t_upper = t.upper()
-            # Procurar padrão IMO 7 dígitos
-            imo_match = re.search(r'IMO\s*(\d{7})', t_upper)
-            if imo_match:
-                imo_num = f"IMO {imo_match.group(1)}"
+            valid_imos = self.validator.extract_and_validate_from_text(t_upper)
+            if valid_imos and not imo_num:
+                imo_num = valid_imos[0]
             elif re.search(r'^[A-Z\s]{4,20}$', t_upper) and not cleaned_name:
                 cleaned_name = t_upper
 
         return {
             "raw_texts": detected_texts,
             "detected_name": cleaned_name,
-            "imo_number": imo_num
+            "imo_number": imo_num,
+            "ocr_attempted": True
         }
 
     def extract_color_palette(self, vessel_crop_bgr):
@@ -192,11 +191,11 @@ class VesselFingerprintExtractor:
             "posicao_passadico_superestrutura": bridge_position
         }
 
-    def generate_unique_fingerprint(self, vessel_crop_bgr, bbox, vit_embedding_768d=None):
+    def generate_unique_fingerprint(self, vessel_crop_bgr, bbox, vit_embedding_768d=None, enable_ocr=True, reid_embedding=None):
         """
         Consolida todas as características em uma assinatura digital única da embarcação.
         """
-        ocr_info = self.extract_hull_text(vessel_crop_bgr)
+        ocr_info = self.extract_hull_text(vessel_crop_bgr, enable_ocr=enable_ocr)
         color_info = self.extract_color_palette(vessel_crop_bgr)
         geom_info = self.extract_geometric_silhouette(vessel_crop_bgr, bbox)
 
@@ -212,6 +211,11 @@ class VesselFingerprintExtractor:
             "nome_identificado_ou_sugerido": suggested_name,
             "numero_imo": ocr_info["imo_number"] or "IMO Não Localizado no Casco",
             "textos_lidos_no_casco": ocr_info["raw_texts"] if ocr_info["raw_texts"] else ["Sem inscrições legíveis"],
+            "ocr_attempted": ocr_info.get("ocr_attempted", False),
+            "texto_extraido": {
+                "imo_number": ocr_info["imo_number"],
+                "detected_name": ocr_info["detected_name"]
+            },
             "caracteristicas_visuais": {
                 "cor_casco": color_info["cor_casco_predominante"],
                 "hex_casco": color_info["hex_casco"],
@@ -222,4 +226,6 @@ class VesselFingerprintExtractor:
                 "posicao_passadico": geom_info["posicao_passadico_superestrutura"]
             }
         }
+        if reid_embedding is not None:
+            fingerprint["reid_embedding"] = reid_embedding
         return fingerprint

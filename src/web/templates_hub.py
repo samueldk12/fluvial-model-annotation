@@ -350,7 +350,7 @@ HUB_PAGE = """<!DOCTYPE html>
         <!-- TOPBAR -->
         <header class="topbar">
             <div class="brand">
-                <div class="brand-mark">🧠</div>
+                <div class="brand-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></div>
                 <div class="brand-text">
                     <h1>AI VISION HUB — PLATAFORMA MULTI-DOMÍNIO</h1>
                     <div class="sub">Suíte Unificada de Percepção Visual, Análise Semântica, Telemetria &amp; Estúdios de Anotação YOLO</div>
@@ -404,7 +404,7 @@ HUB_PAGE = """<!DOCTYPE html>
             <div class="domain-card" style="--domain-color: #00f0ff; --domain-glow: rgba(0, 240, 255, 0.15);">
                 <div>
                     <div class="domain-card-top">
-                        <div class="domain-icon">🚢</div>
+                        <div class="domain-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20a2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1 2.4 2.4 0 0 1 2-1 2.4 2.4 0 0 1 2 1 2.4 2.4 0 0 0 2 1 2.4 2.4 0 0 0 2-1"/><path d="M4 18L3 12h18l-1 6"/><path d="M6 12V4h12v8"/><line x1="12" y1="4" x2="12" y2="1"/></svg></div>
                         <div class="domain-info">
                             <h2>Naval &amp; Aquático</h2>
                             <span class="domain-badge">Porto de Santos &amp; SAR</span>
@@ -421,9 +421,9 @@ HUB_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="domain-actions">
-                    <a href="/naval" class="btn btn-primary btn-full">📹 Acessar Monitoramento Naval</a>
-                    <a href="/naval/anotar" class="btn btn-outline">✏️ Estúdio Anotação</a>
-                    <a href="/naval/sobre" class="btn btn-outline">📖 Documentação</a>
+                    <a href="/naval" class="btn btn-primary btn-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Acessar Monitoramento Naval</a>
+                    <a href="/naval/anotar" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio Anotação</a>
+                    <a href="/naval/sobre" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
                 </div>
             </div>
 
@@ -431,7 +431,7 @@ HUB_PAGE = """<!DOCTYPE html>
             <div class="domain-card" style="--domain-color: #1890ff; --domain-glow: rgba(24, 144, 255, 0.15);">
                 <div>
                     <div class="domain-card-top">
-                        <div class="domain-icon">🏙️</div>
+                        <div class="domain-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="15" y2="18"/></svg></div>
                         <div class="domain-info">
                             <h2>Cidade Urbana &amp; Trânsito</h2>
                             <span class="domain-badge">Smart City &amp; Vias</span>
@@ -448,9 +448,9 @@ HUB_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="domain-actions">
-                    <a href="/urbano" class="btn btn-primary btn-full">📹 Acessar Monitoramento Urbano</a>
-                    <a href="/urbano/anotar" class="btn btn-outline">✏️ Estúdio Anotação</a>
-                    <a href="/urbano/sobre" class="btn btn-outline">📖 Documentação</a>
+                    <a href="/urbano" class="btn btn-primary btn-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Acessar Monitoramento Urbano</a>
+                    <a href="/urbano/anotar" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio Anotação</a>
+                    <a href="/urbano/sobre" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
                 </div>
             </div>
 
@@ -458,7 +458,7 @@ HUB_PAGE = """<!DOCTYPE html>
             <div class="domain-card" style="--domain-color: #722ed1; --domain-glow: rgba(114, 46, 209, 0.15);">
                 <div>
                     <div class="domain-card-top">
-                        <div class="domain-icon">🏢</div>
+                        <div class="domain-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9" y2="9.01"/><line x1="9" y1="13" x2="9" y2="13.01"/><line x1="9" y1="17" x2="9" y2="17.01"/></svg></div>
                         <div class="domain-info">
                             <h2>Ambientes Fechados (Indoor)</h2>
                             <span class="domain-badge">Ocupação &amp; Escritórios</span>
@@ -475,9 +475,9 @@ HUB_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="domain-actions">
-                    <a href="/fechado" class="btn btn-primary btn-full">📹 Acessar Monitoramento Indoor</a>
-                    <a href="/fechado/anotar" class="btn btn-outline">✏️ Estúdio Anotação</a>
-                    <a href="/fechado/sobre" class="btn btn-outline">📖 Documentação</a>
+                    <a href="/fechado" class="btn btn-primary btn-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Acessar Monitoramento Indoor</a>
+                    <a href="/fechado/anotar" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio Anotação</a>
+                    <a href="/fechado/sobre" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
                 </div>
             </div>
 
@@ -485,7 +485,7 @@ HUB_PAGE = """<!DOCTYPE html>
             <div class="domain-card" style="--domain-color: #52c41a; --domain-glow: rgba(82, 196, 26, 0.15);">
                 <div>
                     <div class="domain-card-top">
-                        <div class="domain-icon">🌿</div>
+                        <div class="domain-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 21 2c-1 4.5-1.5 6-2.6 11.7A7 7 0 0 1 11 20z"/><path d="M2 21c0-3 1.8-6 5-7"/></svg></div>
                         <div class="domain-info">
                             <h2>Natureza &amp; Vida Selvagem</h2>
                             <span class="domain-badge">Fauna &amp; Ambiental</span>
@@ -502,9 +502,9 @@ HUB_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="domain-actions">
-                    <a href="/natureza" class="btn btn-primary btn-full">📹 Acessar Monitoramento Natureza</a>
-                    <a href="/natureza/anotar" class="btn btn-outline">✏️ Estúdio Anotação</a>
-                    <a href="/natureza/sobre" class="btn btn-outline">📖 Documentação</a>
+                    <a href="/natureza" class="btn btn-primary btn-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Acessar Monitoramento Natureza</a>
+                    <a href="/natureza/anotar" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio Anotação</a>
+                    <a href="/natureza/sobre" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
                 </div>
             </div>
 
@@ -512,7 +512,7 @@ HUB_PAGE = """<!DOCTYPE html>
             <div class="domain-card" style="--domain-color: #fa8c16; --domain-glow: rgba(250, 140, 22, 0.15);">
                 <div>
                     <div class="domain-card-top">
-                        <div class="domain-icon">📦</div>
+                        <div class="domain-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></div>
                         <div class="domain-info">
                             <h2>Objetos &amp; Varejo / Indústria</h2>
                             <span class="domain-badge">Indústria &amp; Estoque</span>
@@ -529,9 +529,9 @@ HUB_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="domain-actions">
-                    <a href="/objetos" class="btn btn-primary btn-full">📹 Acessar Monitoramento Objetos</a>
-                    <a href="/objetos/anotar" class="btn btn-outline">✏️ Estúdio Anotação</a>
-                    <a href="/objetos/sobre" class="btn btn-outline">📖 Documentação</a>
+                    <a href="/objetos" class="btn btn-primary btn-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Acessar Monitoramento Objetos</a>
+                    <a href="/objetos/anotar" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio Anotação</a>
+                    <a href="/objetos/sobre" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
                 </div>
             </div>
 
@@ -539,7 +539,7 @@ HUB_PAGE = """<!DOCTYPE html>
             <div class="domain-card" style="--domain-color: #eb2f96; --domain-glow: rgba(235, 47, 150, 0.15);">
                 <div>
                     <div class="domain-card-top">
-                        <div class="domain-icon">🎨</div>
+                        <div class="domain-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"/></svg></div>
                         <div class="domain-info">
                             <h2>Tatuagens &amp; Arte Corporal</h2>
                             <span class="domain-badge">Biometria &amp; Estilos</span>
@@ -556,9 +556,9 @@ HUB_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="domain-actions">
-                    <a href="/tatuagens" class="btn btn-primary btn-full">📹 Acessar Estúdio Tatuagens</a>
-                    <a href="/tatuagens/anotar" class="btn btn-outline">✏️ Estúdio Anotação</a>
-                    <a href="/tatuagens/sobre" class="btn btn-outline">📖 Documentação</a>
+                    <a href="/tatuagens" class="btn btn-primary btn-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Acessar Estúdio Tatuagens</a>
+                    <a href="/tatuagens/anotar" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio Anotação</a>
+                    <a href="/tatuagens/sobre" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
                 </div>
             </div>
 
@@ -566,7 +566,7 @@ HUB_PAGE = """<!DOCTYPE html>
             <div class="domain-card" style="--domain-color: #13c2c2; --domain-glow: rgba(19, 194, 194, 0.15);">
                 <div>
                     <div class="domain-card-top">
-                        <div class="domain-icon">🔍</div>
+                        <div class="domain-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
                         <div class="domain-info">
                             <h2>Digitais &amp; Forense Biométrico</h2>
                             <span class="domain-badge">Papiloscopia &amp; AFIS</span>
@@ -583,9 +583,9 @@ HUB_PAGE = """<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="domain-actions">
-                    <a href="/digitais" class="btn btn-primary btn-full">📹 Acessar Análise Papiloscópica</a>
-                    <a href="/digitais/anotar" class="btn btn-outline">✏️ Estúdio Anotação</a>
-                    <a href="/digitais/sobre" class="btn btn-outline">📖 Documentação</a>
+                    <a href="/digitais" class="btn btn-primary btn-full"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Acessar Análise Papiloscópica</a>
+                    <a href="/digitais/anotar" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Estúdio Anotação</a>
+                    <a href="/digitais/sobre" class="btn btn-outline"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Documentação</a>
                 </div>
             </div>
         </div>

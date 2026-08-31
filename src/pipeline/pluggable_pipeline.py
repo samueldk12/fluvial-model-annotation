@@ -24,6 +24,9 @@ from src.utils.water_segmenter import WaterSegmenter
 from src.pipeline.multi_domain_detector import MultiDomainVesselDetector, compute_iou, is_plausible_vessel_size
 from src.utils.vessel_fingerprinter import VesselFingerprintExtractor
 from src.tracking.vessel_spatial_memory import VesselSpatialMemoryTracker
+from src.tracking.bot_sort import BoTSORTTracker
+from src.reid.dinov2_extractor import DINOv2ReIDExtractor
+from src.reid.sqlite_hnsw_gallery import VesselReIDGallery
 
 
 class ModelRegistry:
@@ -193,13 +196,45 @@ class PluggableVisionPipeline:
         self.spatial_memory = VesselSpatialMemoryTracker(spatial_gate_radius=60.0, memory_retention_time=4.0)
         ewasr_path = os.path.join(project_dir, "extra_models", "eWaSR_ResNet18", "ewasr_resnet18.onnx")
         self.water_segmenter = WaterSegmenter(ewasr_path)
+        self.last_water_mask = None
+
+        # BoT-SORT: sem camera_geometry (nao ha calibracao real desta camera), entao
+        # roda em modo honesto - Kalman + custo IoU/aparencia para associacao robusta de
+        # trajetoria, mas SEM fingir velocidade em nos/destino GPS que exigiriam uma
+        # homografia calibrada que nao existe. Ver bot_sort.py e AUDITORIA_ARQUITETURA.md.
+        # Limiares recalibrados: esta câmera opera com scores tipicamente 0.15-0.35
+        # (ver comentário em vessel_spatial_memory.py), bem abaixo dos 0.40-0.50 default
+        # do BoT-SORT (calibrados p/ detectores fortes de benchmark MOT convencional).
+        self.bot_sort = BoTSORTTracker(track_high_thresh=0.18, track_low_thresh=0.07, new_track_thresh=0.18, match_thresh=0.70, camera_geometry=None)
+
+        # DINOv2 Re-ID: so ativa se o backbone real (facebook/dinov2-small) carregar.
+        # Se cair no fallback de CNN aleatoria nao-treinada (sem internet/cache), os
+        # embeddings seriam ruido e pareceriam "similaridade real" sem ser - por isso
+        # desligamos o recurso inteiro nesse caso em vez de fabricar Re-ID falso.
+        self.dinov2_extractor = None
+        try:
+            _dinov2 = DINOv2ReIDExtractor()
+            if hasattr(_dinov2.backbone, "config"):
+                self.dinov2_extractor = _dinov2
+                print("[PluggableVisionPipeline] DINOv2 Re-ID carregado (facebook/dinov2-small).")
+            else:
+                print("[PluggableVisionPipeline] DINOv2 caiu no fallback nao-treinado - Re-ID por embedding DESLIGADO (evitando dado fabricado).")
+        except Exception as e:
+            print(f"[PluggableVisionPipeline] DINOv2 indisponivel ({e}) - Re-ID por embedding DESLIGADO.")
+
+        self.reid_gallery = None
+        try:
+            gallery_db_path = os.path.join(project_dir, "data", "vessel_gallery.db")
+            self.reid_gallery = VesselReIDGallery(db_path=gallery_db_path, embedding_dim=getattr(self.dinov2_extractor, "embedding_dim", 384))
+        except Exception as e:
+            print(f"[PluggableVisionPipeline] Galeria Re-ID (SQLite+HNSW) indisponivel ({e}).")
 
         # Configuração do pipeline ativo (inicializado com a Pré-Arquitetura de Produção)
         self.active_preset_id = "pre_arch_production"
         self.config = {
             "active_model_id": "ensemble_full",
-            "conf_threshold": 0.15,
-            "iou_threshold": 0.45,
+            "conf_threshold": 0.05,
+            "iou_threshold": 0.35,
             "enable_night_enhancement": True,
             "enable_spatial_memory": True,
             "enable_water_segmentation": True,
@@ -419,6 +454,7 @@ class PluggableVisionPipeline:
         water_mask = None
         if self.config["enable_water_segmentation"] and self.water_segmenter.session is not None:
             water_mask = self.water_segmenter.segment(frame_bgr)
+        self.last_water_mask = water_mask
 
         # 5. Filtros de Validação (Segmentação de Água, Laplaciano, Tamanho)
         filtered_candidates = []
@@ -482,9 +518,69 @@ class PluggableVisionPipeline:
             if not overlap:
                 final_dets.append(c)
 
+        # 5b. Re-ID DINOv2: extrai embedding real por candidato (se ativado e modelo carregado)
+        if self.config["enable_vit_reid"] and self.dinov2_extractor is not None:
+            for d in final_dets:
+                x1, y1, x2, y2 = [int(v) for v in d["bbox"]]
+                crop = frame_bgr[max(0, y1):min(h, y2), max(0, x1):min(w, x2)]
+                if crop.size > 0:
+                    try:
+                        d["embedding"] = self.dinov2_extractor.extract_embedding(crop).tolist()
+                    except Exception:
+                        pass
+
+        # 5c. BoT-SORT: Kalman + custo IoU/aparencia para confirmar continuidade real de
+        # trajetoria entre frames, substituindo o reforço ingênuo por raio fixo por uma
+        # associação de verdade (predição de posição + comparação de embedding real).
+        bot_sort_input = [
+            {"bbox": d["bbox"], "conf": d["score_ensemble_final"], "label": d.get("class_name", "Embarcacao"), "embedding": d.get("embedding")}
+            for d in final_dets
+        ]
+        bot_tracks = self.bot_sort.update(bot_sort_input, now_ts)
+        for bt in bot_tracks:
+            if bt["hits"] < 2:
+                continue
+            best_det, best_iou = None, 0.30
+            for d in final_dets:
+                iou = compute_iou(d["bbox"], bt["bbox"])
+                if iou > best_iou:
+                    best_iou = iou
+                    best_det = d
+            if best_det is not None:
+                best_det["reforcado_por_memoria"] = True
+                best_det["reforcado_por_botsort"] = True
+                best_det["score_ensemble_final"] = min(0.99, best_det["score_ensemble_final"] + 0.10)
+
         # 5. Memória Espacial & Rastreamento Temporal
         if self.config["enable_spatial_memory"]:
-            confirmed_vessels = self.spatial_memory.update(final_dets, self.fingerprinter, frame_bgr, now_ts)
+            confirmed_vessels = self.spatial_memory.update(final_dets, self.fingerprinter, frame_bgr, now_ts, enable_ocr=self.config["enable_ocr"])
+
+            # 5d. Galeria Re-ID persistente (SQLite + HNSW): registra/busca embeddings reais
+            # entre sessões, permitindo Re-ID real de embarcações vistas em execuções anteriores.
+            if self.config["enable_vit_reid"] and self.reid_gallery is not None:
+                for v in confirmed_vessels:
+                    emb = v.get("embedding")
+                    if emb is None:
+                        continue
+                    v_id = v.get("vessel_id")
+                    fp = v.get("fingerprint", {}) if isinstance(v.get("fingerprint"), dict) else {}
+                    meta = {
+                        "name": v.get("name", ""),
+                        "imo": fp.get("numero_imo", ""),
+                        "category_5classes": "Embarcacao"
+                    }
+                    try:
+                        matches = self.reid_gallery.search(emb, k=1, similarity_threshold=0.75)
+                        if matches and matches[0]["vessel_id"] != v_id:
+                            v["reid_gallery_match"] = {
+                                "vessel_id": matches[0]["vessel_id"],
+                                "name": matches[0]["name"],
+                                "similarity_score": matches[0]["similarity_score"],
+                                "first_seen": matches[0]["first_seen"]
+                            }
+                        self.reid_gallery.register_or_update_vessel(v_id, emb, meta)
+                    except Exception:
+                        pass
         else:
             # Rastreamento simplificado direto sem memória temporal
             confirmed_vessels = []

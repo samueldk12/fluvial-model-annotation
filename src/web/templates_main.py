@@ -224,8 +224,8 @@ HTML_PAGE = """<!DOCTYPE html>
             </div>
             <div class="gpu-meta">DirectML</div>
             <a href="/anotar" class="topbar-btn highlight" title="Estúdio de Anotação e Segmentação CVAT">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-                🏷️ Anotar (CVAT)
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Anotar (CVAT)
             </a>
             <a href="/sobre" class="topbar-btn" title="Arquitetura e Documentação">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -240,15 +240,15 @@ HTML_PAGE = """<!DOCTYPE html>
             <!-- PAINEL DE ARQUITETURA ACOPLÁVEL -->
             <div class="card" style="border-color: rgba(76,159,176,0.4);">
                 <div class="panel-title">
-                    <h3>⚡ Arquitetura &amp; Modelos</h3>
+                    <h3><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Arquitetura &amp; Modelos</h3>
                     <span class="badge blue" id="active-model-badge">Ensemble</span>
                 </div>
 
                 <div class="form-group" style="background:rgba(24,144,255,0.08); padding:8px; border-radius:4px; border:1px solid rgba(24,144,255,0.25); margin-bottom:10px;">
-                    <label class="form-label" style="color:var(--accent-cyan);">🏛️ Preset de Arquitetura</label>
+                    <label class="form-label" style="color:var(--accent-cyan);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>Preset de Arquitetura</label>
                     <select class="select-input" id="arch-preset-select" style="font-weight:600;">
-                        <option value="pre_arch_production">⚓ Pré-Arquitetura: Produção Multi-Domínio</option>
-                        <option value="test_arch_experimental">🧪 Arquitetura de Teste: YOLO11n + YOLO26n Edge</option>
+                        <option value="pre_arch_production">Arquitetura de Produção: Ensemble Multi-Domínio (WBF + BoT-SORT + DINOv2 + IMO OCR)</option>
+                        <option value="test_arch_experimental">Arquitetura de Teste: YOLO11n + YOLO26n Edge Ultra-Rápido</option>
                     </select>
                 </div>
 
@@ -285,35 +285,35 @@ HTML_PAGE = """<!DOCTYPE html>
                 <div style="margin-top:6px;">
                     <label class="form-label" style="margin-bottom:6px;">Submódulos Ativos</label>
                     <div class="switch-row">
-                        <span>🌙 Visão Noturna (CLAHE)</span>
+                        <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Visão Noturna (CLAHE)</span>
                         <label class="switch">
                             <input type="checkbox" id="toggle-night" checked>
                             <span class="switch-slider"></span>
                         </label>
                     </div>
                     <div class="switch-row">
-                        <span>🌊 Segmentação Água (eWaSR)</span>
+                        <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>Segmentação Água (eWaSR)</span>
                         <label class="switch">
                             <input type="checkbox" id="toggle-water" checked>
                             <span class="switch-slider"></span>
                         </label>
                     </div>
                     <div class="switch-row">
-                        <span>📍 Memória Espacial &amp; Rastro</span>
+                        <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Memória Espacial &amp; Rastro</span>
                         <label class="switch">
                             <input type="checkbox" id="toggle-spatial" checked>
                             <span class="switch-slider"></span>
                         </label>
                     </div>
                     <div class="switch-row">
-                        <span>🔍 Classificador ViT &amp; Re-ID</span>
+                        <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Classificador ViT &amp; Re-ID</span>
                         <label class="switch">
                             <input type="checkbox" id="toggle-vit" checked>
                             <span class="switch-slider"></span>
                         </label>
                     </div>
                     <div class="switch-row">
-                        <span>🔤 OCR de Casco (EasyOCR)</span>
+                        <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>OCR de Casco (EasyOCR)</span>
                         <label class="switch">
                             <input type="checkbox" id="toggle-ocr" checked>
                             <span class="switch-slider"></span>
@@ -325,7 +325,7 @@ HTML_PAGE = """<!DOCTYPE html>
                 <div style="margin-top:12px;">
                     <input type="file" id="model-upload-input" accept=".pt,.onnx" style="display:none;">
                     <button class="btn outline-cyan" onclick="document.getElementById('model-upload-input').click()">
-                        ➕ Acoplar Novo Modelo (.pt / .onnx)
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Acoplar Novo Modelo (.pt / .onnx)
                     </button>
                 </div>
             </div>
@@ -622,17 +622,20 @@ HTML_PAGE = """<!DOCTYPE html>
                         const card = document.createElement('div');
                         card.className = 'vessel-card';
                         const statusClass = v.is_stationary ? 'stop' : 'nav';
-                        const statusText = v.is_stationary ? 'PARADO' : `NAVEGANDO (${(v.speed || 0).toFixed(1)} px/s)`;
+                        const statusText = v.is_stationary ? 'PARADO' : `NAVEGANDO (${(v.speed || 0).toFixed(1)} nós)`;
+                        const ocrInfo = v.fingerprint?.texto_ocr ? `<div>Inscrição/IMO: <strong>${v.fingerprint.texto_ocr}</strong></div>` : '';
                         card.innerHTML = `
                             <div class="vessel-header">
                                 <span class="vessel-id">${v.vessel_id}</span>
                                 <span class="vessel-stat ${statusClass}">${statusText}</span>
                             </div>
                             <div class="vessel-details">
-                                <div>Destino: <strong>${v.destination || 'Canal'}</strong></div>
+                                <div>Tipo: <strong>${v.name || 'Embarcação'}</strong></div>
+                                <div>Destino: <strong>${v.destination || 'Canal de Santos'}</strong></div>
                                 <div>Confiança: <strong>${v.score_ensemble || 85}%</strong></div>
-                                <div>Rumo: <strong>${v.cardinal || 'N/D'} (${Math.round(v.heading_deg || 0)}°)</strong></div>
+                                <div>Rumo: <strong>${v.cardinal || 'Proa Fixa'} (${Math.round(v.heading_deg || 0)}°)</strong></div>
                                 <div>Cor Casco: <strong>${v.fingerprint?.cor_casco || 'N/D'}</strong></div>
+                                ${ocrInfo}
                             </div>
                         `;
                         vList.appendChild(card);

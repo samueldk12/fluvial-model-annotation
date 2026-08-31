@@ -9,13 +9,19 @@ e prediz onde deve estar, eliminando 100% de falsos positivos e caixas fantasmas
 import math
 import time
 import numpy as np
+from src.geometry.camera_calibration import CameraGeometryConfig
+from src.geometry.metric_conversions import MetricUnitConverter, NauticalThresholds
+from src.tracking.state_anchor_manager import StateAnchorManager
+
 
 class VesselSpatialMemoryTracker:
-    def __init__(self, spatial_gate_radius=60.0, memory_retention_time=4.0):
+    def __init__(self, spatial_gate_radius=60.0, memory_retention_time=4.0, camera_geometry=None):
         self.spatial_gate_radius = spatial_gate_radius
         self.memory_retention_time = memory_retention_time
+        self.camera_geometry = camera_geometry if camera_geometry is not None else CameraGeometryConfig()
         self.vessels_memory = {}
         self.next_vessel_idx = 1
+
 
     def _compute_iou(self, box1, box2):
         x1 = max(box1[0], box2[0])
@@ -35,6 +41,17 @@ class VesselSpatialMemoryTracker:
         c2 = fp2.get("caracteristicas_visuais", {}).get("cor_casco", "")
         return 1.0 if (c1 == c2 and c1 != "") else 0.50
 
+    @staticmethod
+    def _embedding_cosine_sim(emb1, emb2):
+        if emb1 is None or emb2 is None:
+            return None
+        a = np.asarray(emb1, dtype=np.float64)
+        b = np.asarray(emb2, dtype=np.float64)
+        na, nb = np.linalg.norm(a), np.linalg.norm(b)
+        if na < 1e-7 or nb < 1e-7:
+            return None
+        return float(np.dot(a, b) / (na * nb))
+
     def _get_sector_name(self, cx, cy, width, height):
         h_third = height / 3.0
         w_third = width / 3.0
@@ -42,7 +59,7 @@ class VesselSpatialMemoryTracker:
         h_sec = "Margem Esquerda (Oeste)" if cx < w_third else ("Margem Direita (Leste)" if cx > 2 * w_third else "Centro da Calha")
         return f"{v_sec} - {h_sec}"
 
-    def update(self, raw_detections, fingerprinter, frame_bgr, timestamp):
+    def update(self, raw_detections, fingerprinter, frame_bgr, timestamp, enable_ocr=True):
         h_frame, w_frame = frame_bgr.shape[:2]
         matched_mem_ids = set()
         candidates_with_fp = []
@@ -56,7 +73,8 @@ class VesselSpatialMemoryTracker:
             bh = y2 - y1
 
             crop = frame_bgr[max(0, y1):min(h_frame, y2), max(0, x1):min(w_frame, x2)]
-            fp = fingerprinter.generate_unique_fingerprint(crop, (x1, y1, x2, y2))
+            reid_embedding = det.get("embedding")
+            fp = fingerprinter.generate_unique_fingerprint(crop, (x1, y1, x2, y2), enable_ocr=enable_ocr, reid_embedding=reid_embedding)
             candidates_with_fp.append({
                 "bbox": b,
                 "cx": cx,
@@ -64,7 +82,8 @@ class VesselSpatialMemoryTracker:
                 "bw": bw,
                 "bh": bh,
                 "det": det,
-                "fp": fp
+                "fp": fp,
+                "embedding": reid_embedding
             })
 
         for cand in candidates_with_fp:
@@ -88,10 +107,17 @@ class VesselSpatialMemoryTracker:
 
                 dist_expected = math.hypot(cx - expected_x, cy - expected_y)
                 iou_expected = self._compute_iou(b, v_mem["bbox"])
-                color_sim = self._color_similarity(cand_fp, v_mem["fingerprint"])
+                embedding_sim = self._embedding_cosine_sim(cand.get("embedding"), v_mem.get("embedding"))
 
                 if dist_expected < self.spatial_gate_radius or iou_expected > 0.25:
-                    match_score = (0.50 * iou_expected) + (0.30 * (1.0 - min(1.0, dist_expected / self.spatial_gate_radius))) + (0.20 * color_sim)
+                    if embedding_sim is not None:
+                        # Re-ID real via embedding (DINOv2): substitui a similaridade de cor,
+                        # que so distinguia por nome de cor dominante (grosseiro).
+                        appearance_sim = max(0.0, embedding_sim)
+                        match_score = (0.45 * iou_expected) + (0.25 * (1.0 - min(1.0, dist_expected / self.spatial_gate_radius))) + (0.30 * appearance_sim)
+                    else:
+                        color_sim = self._color_similarity(cand_fp, v_mem["fingerprint"])
+                        match_score = (0.50 * iou_expected) + (0.30 * (1.0 - min(1.0, dist_expected / self.spatial_gate_radius))) + (0.20 * color_sim)
                     if match_score > best_match_score and match_score >= 0.35:
                         best_match_score = match_score
                         best_match_id = v_id
@@ -105,6 +131,16 @@ class VesselSpatialMemoryTracker:
                 v_mem["bh"] = cand["bh"]
                 v_mem["fingerprint"] = cand_fp
                 v_mem["detection_data"] = cand["det"]
+                if cand.get("embedding") is not None:
+                    if v_mem.get("embedding") is not None:
+                        # EMA para estabilizar contra variacoes de pose/iluminacao entre frames.
+                        prev = np.asarray(v_mem["embedding"], dtype=np.float64)
+                        new = np.asarray(cand["embedding"], dtype=np.float64)
+                        blended = 0.7 * prev + 0.3 * new
+                        norm = np.linalg.norm(blended)
+                        v_mem["embedding"] = (blended / norm).tolist() if norm > 1e-7 else new.tolist()
+                    else:
+                        v_mem["embedding"] = cand["embedding"]
                 v_mem["consecutive_hits"] += 1
                 v_mem["missing_time"] = 0.0
                 v_mem["memory_strength"] = min(1.0, v_mem["memory_strength"] + 0.25)
@@ -151,6 +187,13 @@ class VesselSpatialMemoryTracker:
                         "sector": entry_sector
                     }]
 
+                    metric_init = [0.0, 0.0]
+                    try:
+                        w_pts = self.camera_geometry.homography.image_to_water(np.array([[cx, cy]]))
+                        metric_init = w_pts[0].tolist()
+                    except Exception:
+                        pass
+
                     self.vessels_memory[new_id] = {
                         "vessel_id": new_id,
                         "name": v_name,
@@ -161,6 +204,7 @@ class VesselSpatialMemoryTracker:
                         "bh": cand["bh"],
                         "fingerprint": cand_fp,
                         "detection_data": cand["det"],
+                        "embedding": cand.get("embedding"),
                         "memory_strength": 0.35,
                         "consecutive_hits": 1,
                         "missing_time": 0.0,
@@ -172,8 +216,11 @@ class VesselSpatialMemoryTracker:
                         "entry_sector": entry_sector,
                         "origin_story": f"Entrou no canal às {entry_time_str} pelo {entry_sector} (X: {int(cx)}, Y: {int(cy)}).",
                         "anchor_pos": (cx, cy),
+                        "anchor_manager": StateAnchorManager(initial_metric_pos=metric_init, initial_img_pos=(cx, cy)),
                         "is_stationary": True,
                         "speed": 0.0,
+                        "speed_knots": 0.0,
+                        "speed_mps": 0.0,
                         "vx": 0.0,
                         "vy": 0.0,
                         "heading_deg": 0.0,
@@ -183,6 +230,7 @@ class VesselSpatialMemoryTracker:
                         "last_seen": timestamp
                     }
                     matched_mem_ids.add(new_id)
+
 
         vessels_to_delete = []
         for v_id, v_mem in self.vessels_memory.items():
@@ -200,7 +248,7 @@ class VesselSpatialMemoryTracker:
 
         confirmed_active = [
             v for v in self.vessels_memory.values()
-            if v["is_confirmed"] and v["memory_strength"] >= 0.60
+            if (v["is_confirmed"] and v["memory_strength"] >= 0.50) or (v["consecutive_hits"] >= 1 and v["memory_strength"] >= 0.25)
         ]
         return confirmed_active
 
@@ -208,11 +256,64 @@ class VesselSpatialMemoryTracker:
         recent_pts = np.array([(p[0], p[1]) for p in v_mem["history"][-8:]])
         med_x, med_y = float(np.median(recent_pts[:, 0])), float(np.median(recent_pts[:, 1]))
 
-        dist_from_anchor = math.hypot(med_x - v_mem["anchor_pos"][0], med_y - v_mem["anchor_pos"][1])
+        try:
+            water_pts = self.camera_geometry.homography.image_to_water(np.array([[v_mem["anchor_pos"][0], v_mem["anchor_pos"][1]], [med_x, med_y]]))
+            dist_anchor_m = float(np.linalg.norm(water_pts[1] - water_pts[0]))
+        except Exception:
+            dist_anchor_m = float(math.hypot(med_x - v_mem["anchor_pos"][0], med_y - v_mem["anchor_pos"][1]) * 0.8)
 
-        if dist_from_anchor < 12.0:
+        window = v_mem["history"][-8:]
+        mid = max(1, len(window) // 2)
+        older_half = window[:mid]
+        newer_half = window[mid:] or window[-1:]
+        ref_x = float(np.median([p[0] for p in older_half]))
+        ref_y = float(np.median([p[1] for p in older_half]))
+        ref_t = float(np.mean([p[2] for p in older_half]))
+        new_x = float(np.median([p[0] for p in newer_half]))
+        new_y = float(np.median([p[1] for p in newer_half]))
+        new_t = float(np.mean([p[2] for p in newer_half]))
+        dt = max(0.30, new_t - ref_t)
+
+        try:
+            water_mov = self.camera_geometry.homography.image_to_water(np.array([[ref_x, ref_y], [new_x, new_y]]))
+            vel_info = MetricUnitConverter.compute_velocity_and_course(water_mov[0], water_mov[1], dt)
+            speed_knots = vel_info['speed_knots']
+            speed_mps = vel_info['speed_mps']
+            heading_deg = vel_info['heading_deg']
+            cardinal = vel_info['cardinal']
+        except Exception:
+            vx_px = (new_x - ref_x) / dt
+            vy_px = (new_y - ref_y) / dt
+            speed_px = math.hypot(vx_px, vy_px)
+            speed_mps = speed_px * 0.5
+            speed_knots = MetricUnitConverter.mps_to_knots(speed_mps)
+            heading_rad = math.atan2(vx_px, -vy_px)
+            heading_deg = (math.degrees(heading_rad) + 360.0) % 360.0
+            cardinal = self._degrees_to_cardinal(heading_deg)
+
+        try:
+            metric_dims = self.camera_geometry.homography.box_to_metric_dimensions(v_mem["bbox"])
+            v_mem["metric_dimensions"] = metric_dims
+        except Exception:
+            v_mem["metric_dimensions"] = None
+
+        metric_current = [0.0, 0.0]
+        try:
+            w_pts = self.camera_geometry.homography.image_to_water(np.array([[med_x, med_y]]))
+            metric_current = w_pts[0].tolist()
+        except Exception:
+            pass
+
+        if "anchor_manager" not in v_mem:
+            v_mem["anchor_manager"] = StateAnchorManager(initial_metric_pos=metric_current, initial_img_pos=(med_x, med_y))
+
+        nav_state, changed, anc_metric, dwell_s = v_mem["anchor_manager"].update_state(metric_current, speed_knots, timestamp, (med_x, med_y))
+
+        if nav_state == 'STATIONARY':
             v_mem["is_stationary"] = True
             v_mem["speed"] = 0.0
+            v_mem["speed_knots"] = 0.0
+            v_mem["speed_mps"] = 0.0
             v_mem["vx"] = 0.0
             v_mem["vy"] = 0.0
             v_mem["cardinal"] = "Proa Fixa (Atracado)"
@@ -222,79 +323,25 @@ class VesselSpatialMemoryTracker:
             anc_x = int(v_mem["anchor_pos"][0])
             anc_y = int(v_mem["anchor_pos"][1])
             v_mem["origin_story"] = f"Origem: Entrou às {entry_t} pelo {entry_sec}. Fundeado/atracado em posição fixa (X: {anc_x}, Y: {anc_y})."
+
         else:
-            # Velocidade calculada numa JANELA RECENTE (ultimas ate 8
-            # deteccoes), nao desde o primeiro registro historico. Ancorar
-            # em history[0] fazia com que UMA deteccao ruidosa antiga (ex:
-            # reflexo de luz na agua com leve variacao de posicao) definisse
-            # uma velocidade pequena e praticamente constante que ficava
-            # sendo extrapolada por minutos - o "quadrado fantasma andando
-            # sozinho na diagonal" mesmo sem nenhum barco real se movendo.
-            #
-            # Comparamos a METADE MAIS ANTIGA da janela com a METADE MAIS
-            # RECENTE (cada uma resumida pela propria mediana, pra manter a
-            # robustez a ruido de deteccao) em vez de "mediana da janela toda
-            # vs. ponto mais antigo da janela". A mediana da janela toda fica
-            # posicionada por volta do MEIO da janela no tempo, mas antes
-            # dividiamos o deslocamento ate ali pelo intervalo de tempo da
-            # janela INTEIRA - subestimando a velocidade real em ~metade (um
-            # barco realmente andando a 4px/s calculava so ~2px/s e nunca
-            # cruzava o limiar de 3.0, ficando preso em "PARADO" pra sempre
-            # apesar do trajectory_trail mostrar deslocamento real).
-            window = v_mem["history"][-8:]
-            mid = max(1, len(window) // 2)
-            older_half = window[:mid]
-            newer_half = window[mid:] or window[-1:]
-            ref_x = float(np.median([p[0] for p in older_half]))
-            ref_y = float(np.median([p[1] for p in older_half]))
-            ref_t = float(np.mean([p[2] for p in older_half]))
-            new_x = float(np.median([p[0] for p in newer_half]))
-            new_y = float(np.median([p[1] for p in newer_half]))
-            new_t = float(np.mean([p[2] for p in newer_half]))
-            dt = max(0.30, new_t - ref_t)
-            vx = (new_x - ref_x) / dt
-            vy = (new_y - ref_y) / dt
-            speed = math.hypot(vx, vy)
+            v_mem["is_stationary"] = False
+            v_mem["speed"] = speed_knots
+            v_mem["speed_knots"] = round(speed_knots, 2)
+            v_mem["speed_mps"] = round(speed_mps, 2)
+            v_mem["vx"] = (new_x - ref_x) / dt
+            v_mem["vy"] = (new_y - ref_y) / dt
+            v_mem["heading_deg"] = heading_deg
+            v_mem["cardinal"] = cardinal
+            v_mem["destination"] = self._compute_dynamic_destination(heading_deg)
 
-            # Limiar recalibrado de 3.0 para 1.0 px/s: nesta camera (vista
-            # aerea/elevada, barcos distantes), um barco realmente andando
-            # continuamente a 1.0-2.0px/s (deslocamento real e monotonico,
-            # nao ruido) ficava travado em PARADO para sempre - testado com
-            # simulacao isolada, 40 iteracoes (36s) de movimento continuo a
-            # 1-2px/s nunca cruzava o limiar antigo. Ruido puro (jitter
-            # +-2px sem deslocamento real) continua classificado como
-            # parado com o novo limiar, testado separadamente.
-            if speed > 1.0:
-                v_mem["is_stationary"] = False
-                v_mem["speed"] = speed
-                v_mem["vx"] = vx
-                v_mem["vy"] = vy
-                heading_rad = math.atan2(vx, -vy)
-                heading_deg = (math.degrees(heading_rad) + 360.0) % 360.0
-                v_mem["heading_deg"] = heading_deg
-                v_mem["cardinal"] = self._degrees_to_cardinal(heading_deg)
-                v_mem["destination"] = self._compute_dynamic_destination(heading_deg)
-                # NAO reancorar aqui. anchor_pos precisa continuar apontando pra
-                # onde o barco estava quando parado pela ultima vez - e o que
-                # dist_from_anchor (topo da funcao) usa pra decidir "parado".
-                # Resetar o anchor pra posicao atual TODA VEZ que o barco esta
-                # em movimento fazia dist_from_anchor no ciclo seguinte medir a
-                # partir de um anchor que acabou de ser colocado "bem aqui" -
-                # pra um barco lento isso quase sempre da <12px, jogando o
-                # estado de volta pra PARADO no proximo ciclo mesmo com
-                # deslocamento real (o rotulo ficava oscilando/preso em
-                # "PARADO" apesar do trajectory_trail mostrar movimento).
+            entry_x, entry_y = v_mem.get("entry_pos", (cx, cy))
+            dist_total = math.hypot(cx - entry_x, cy - entry_y)
+            entry_t = v_mem.get("entry_time", "--")
+            entry_sec = v_mem.get("entry_sector", "Canal")
+            len_m = v_mem["metric_dimensions"]["length_m"] if v_mem.get("metric_dimensions") else 0.0
+            v_mem["origin_story"] = f"Origem: Entrou às {entry_t} pelo {entry_sec}. Velocidade: {v_mem['speed_knots']} nós ({v_mem['speed_mps']} m/s) com rumo {v_mem['cardinal']} ({int(heading_deg)}°); Destino estimado: {v_mem['destination']}."
 
-                entry_x, entry_y = v_mem.get("entry_pos", (cx, cy))
-                dist_total = math.hypot(cx - entry_x, cy - entry_y)
-                entry_t = v_mem.get("entry_time", "--")
-                entry_sec = v_mem.get("entry_sector", "Canal")
-                v_mem["origin_story"] = f"Origem: Entrou às {entry_t} pelo {entry_sec}. Deslocou-se {int(dist_total)}px com rumo {v_mem['cardinal']} ({int(heading_deg)} graus); Destino estimado: {v_mem['destination']}."
-            else:
-                v_mem["is_stationary"] = True
-                v_mem["speed"] = 0.0
-                v_mem["cardinal"] = "Proa Fixa (Atracado)"
-                v_mem["destination"] = "Atracado no Píer / Fundeado"
 
     def _degrees_to_cardinal(self, degrees):
         dirs = [

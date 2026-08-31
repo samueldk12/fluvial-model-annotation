@@ -38,6 +38,8 @@ from src.annotation.class_presets import ClassPresetManager
 from src.domains.domain_config import DOMAINS_CONFIG
 from src.domains.domain_analyzer import DomainVisionAnalyzer
 from src.domains.domain_registry import DomainRegistryManager
+from src.ai.gemini_annotator import GeminiVisionAnnotator
+from src.annotation.augmentation_engine import DatasetAugmentationEngine
 
 from src.web.templates_hub import HUB_PAGE
 from src.web.templates_domain import get_domain_monitoring_html
@@ -77,6 +79,8 @@ domain_dataset_managers = {
 }
 dataset_manager = domain_dataset_managers["naval"]
 class_preset_manager = ClassPresetManager(project_dir)
+gemini_annotator = GeminiVisionAnnotator()
+augmentation_engine = DatasetAugmentationEngine()
 
 # 3. Estados de Transmissão por Domínio
 domain_streams_state = {}
@@ -89,8 +93,8 @@ for d_id, conf in DOMAINS_CONFIG.items():
         "night_vision": False,
         "latest_raw_frame": None,
         "last_telemetry": {
-            "status": "VIGILANCIA_ATIVA",
-            "latency_ms": 12.5,
+            "status": "AGUARDANDO_PRIMEIRO_FRAME",
+            "latency_ms": 0.0,
             "semantica_cena": {k["key"]: k["default"] for k in conf.get("semantics_keys", [])},
             "targets": []
         }
@@ -184,17 +188,125 @@ def generate_video_stream(source_type="LIVE", domain_id="naval"):
         if state.get("night_vision"):
             frame = enhance_night_vision(frame)
 
-        # Executa análise pelo analisador de domínio
-        analysis_result, pil_annotated = analyzer.analyze_image(frame)
-        display_frame = cv2.cvtColor(np.array(pil_annotated), cv2.COLOR_RGB2BGR)
+        if domain_id == "naval":
+            confirmed_vessels = pluggable_pipeline.process_frame(frame, time.time())
+            annotated_frame = frame.copy()
+            for v in confirmed_vessels:
+                bbox = v.get("bbox", [0, 0, 10, 10])
+                x1, y1, x2, y2 = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+                is_stat = v.get("is_stationary", True)
+                spd = float(v.get("speed_knots", v.get("speed", 0.0)))
+                v_id = v.get("vessel_id", "BR-STS")
+                v_name = v.get("name", "Embarcacao")
+                card = v.get("cardinal", "Proa Fixa")
+                hdg = float(v.get("heading_deg", 0.0))
+                det_data = v.get("detection_data", {})
+                sources = det_data.get("fontes_detectoras", ["Ensemble"])
+                is_mem = det_data.get("reforcado_por_memoria", False)
+                ocr_num = v.get("fingerprint", {}).get("texto_extraido", {}).get("imo_number") if isinstance(v.get("fingerprint"), dict) else None
 
-        # Atualiza telemetria do domínio
-        state["last_telemetry"] = {
-            "status": analysis_result.get("status", "VIGILANCIA_ATIVA"),
-            "latency_ms": analysis_result.get("tempo_processamento_ms", 12.0),
-            "semantica_cena": analysis_result.get("semantica_cena", {}),
-            "targets": analysis_result.get("targets_detectados", [])
-        }
+                box_color = (255, 200, 0) if not is_stat else (80, 220, 80)
+                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), box_color, 2)
+
+                label_h = 42 if ocr_num else 30
+                badge_y1 = max(0, y1 - label_h)
+                badge_y2 = y1
+                badge_w = max(180, (x2 - x1))
+                badge_x2 = min(width, x1 + badge_w)
+
+                overlay = annotated_frame.copy()
+                cv2.rectangle(overlay, (x1, badge_y1), (badge_x2, badge_y2), (15, 20, 30), -1)
+                cv2.addWeighted(overlay, 0.75, annotated_frame, 0.25, 0, annotated_frame)
+                cv2.rectangle(annotated_frame, (x1, badge_y1), (badge_x2, badge_y2), box_color, 1)
+
+                stat_txt = "PARADO" if is_stat else f"NAV {spd:.1f} nós"
+                mem_tag = " [MEM]" if is_mem else ""
+                sources_str = "+".join([s.split("_")[0] for s in sources[:2]])
+                line1 = f"{v_id} | {stat_txt} ({sources_str}){mem_tag}"
+                cv2.putText(annotated_frame, line1, (x1 + 4, badge_y1 + 13), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 255, 255), 1)
+
+                line2 = f"{v_name} | {card} ({int(hdg)}°)"
+                cv2.putText(annotated_frame, line2, (x1 + 4, badge_y1 + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (200, 220, 240), 1)
+
+                if ocr_num:
+                    cv2.putText(annotated_frame, f"IMO: {ocr_num}", (x1 + 4, badge_y1 + 37), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (100, 255, 200), 1)
+
+                trail = v.get("trajectory_trail", [])
+                if len(trail) >= 2:
+                    pts = np.array([[p["x"], p["y"]] for p in trail], dtype=np.int32).reshape((-1, 1, 2))
+                    cv2.polylines(annotated_frame, [pts], False, (0, 240, 255), 2)
+
+            display_frame = annotated_frame
+
+            vessels_ui = []
+            for v in confirmed_vessels:
+                v_id = v.get("vessel_id", "N/D")
+                v_name = v.get("name", "Embarcacao")
+                is_stat = bool(v.get("is_stationary", True))
+                spd = float(v.get("speed_knots", v.get("speed", 0.0)))
+                dest = v.get("destination", "N/D")
+                card = v.get("cardinal", "N/D")
+                hdg = float(v.get("heading_deg", 0.0))
+                score = int(round(v.get("detection_data", {}).get("score_ensemble_final", 0.0) * 100))
+                cor = v.get("fingerprint", {}).get("caracteristicas_visuais", {}).get("cor_casco", "N/D") if isinstance(v.get("fingerprint"), dict) else "N/D"
+                # Antes caia num "IMO 9074729" hardcoded (dado fabricado) quando nao
+                # havia leitura real de OCR - agora reporta honestamente que nao leu nada.
+                _fp = v.get("fingerprint") if isinstance(v.get("fingerprint"), dict) else {}
+                _texto = _fp.get("texto_extraido", {}) if isinstance(_fp.get("texto_extraido"), dict) else {}
+                ocr_txt = _texto.get("imo_number") or _texto.get("detected_name") or "Sem leitura de OCR"
+
+                _det = v.get("detection_data", {}) if isinstance(v.get("detection_data"), dict) else {}
+                _gallery_match = v.get("reid_gallery_match")
+                vessels_ui.append({
+                    "vessel_id": v_id,
+                    "name": v_name,
+                    "is_stationary": is_stat,
+                    "speed": spd,
+                    "speed_knots": spd,
+                    "heading_deg": hdg,
+                    "cardinal": card,
+                    "destination": dest,
+                    "score_ensemble": score,
+                    "bbox": v.get("bbox", [0, 0, 10, 10]),
+                    "fingerprint": {
+                        "cor_casco": cor,
+                        "texto_ocr": ocr_txt
+                    },
+                    "trajectory_trail": v.get("trajectory_trail", []),
+                    "fontes_detectoras": _det.get("fontes_detectoras", []),
+                    "reforcado_por_memoria": bool(_det.get("reforcado_por_memoria", False)),
+                    "reforcado_por_botsort": bool(_det.get("reforcado_por_botsort", False)),
+                    "reid_embedding_ativo": v.get("embedding") is not None,
+                    "reid_gallery_match": _gallery_match
+                })
+
+            _water_pct = pluggable_pipeline.water_segmenter.water_coverage_pct(pluggable_pipeline.last_water_mask)
+            state["last_telemetry"] = {
+                "status": "VIGILANCIA_ATIVA",
+                "latency_ms": round(pluggable_pipeline.last_inference_latency_ms or 0.0, 1),
+                "vessels": vessels_ui,
+                "targets": vessels_ui,
+                "vessel_history": [
+                    {"vessel_id": v["vessel_id"], "last_seen": time.strftime("%H:%M:%S"), "last_destination": v["destination"]}
+                    for v in vessels_ui
+                ],
+                "semantica_cena": {
+                    "total_embarcacoes": len(vessels_ui),
+                    "navegando": sum(1 for v in vessels_ui if not v["is_stationary"]),
+                    "atracados": sum(1 for v in vessels_ui if v["is_stationary"]),
+                    "cobertura_agua_pct": round(_water_pct, 1) if _water_pct is not None else "N/D"
+                }
+            }
+        else:
+            analysis_result, pil_annotated = analyzer.analyze_image(frame)
+            display_frame = cv2.cvtColor(np.array(pil_annotated), cv2.COLOR_RGB2BGR)
+            state["last_telemetry"] = {
+                "status": analysis_result.get("status", "VIGILANCIA_ATIVA"),
+                "latency_ms": analysis_result.get("tempo_processamento_ms", 0.0),
+                "semantica_cena": analysis_result.get("semantica_cena", {}),
+                "targets": analysis_result.get("targets_detectados", []),
+                "vessels": analysis_result.get("targets_detectados", [])
+            }
 
         ret_jpg, jpeg = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         if ret_jpg:
@@ -334,11 +446,21 @@ def api_toggle_night_vision(domain_id="naval"):
     state["night_vision"] = bool(data.get("night_vision", False))
     return jsonify({"status": "ok", "night_vision": state["night_vision"]})
 
-@app.route("/api/live_raw_snapshot", methods=["GET"])
-@app.route("/api/<domain_id>/live_raw_snapshot", methods=["GET"])
+@app.route("/api/live_raw_snapshot", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/live-stream-snapshot", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/<domain_id>/live_raw_snapshot", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/<domain_id>/live-stream-snapshot", methods=["GET", "POST", "OPTIONS"])
 def api_live_raw_snapshot(domain_id="naval"):
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
     state = domain_streams_state.get(domain_id, domain_streams_state["naval"])
     frame = state.get("latest_raw_frame")
+    if frame is None:
+        vpath = os.path.join(project_dir, "data", "teste_santos_3minutos_completo.mp4")
+        if os.path.exists(vpath):
+            c = cv2.VideoCapture(vpath)
+            ret, frame = c.read()
+            c.release()
     if frame is None:
         frame = np.zeros((720, 1280, 3), dtype=np.uint8)
     _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
@@ -347,9 +469,65 @@ def api_live_raw_snapshot(domain_id="naval"):
         "status": "ok",
         "domain": domain_id,
         "image_base64": f"data:image/jpeg;base64,{b64_str}",
+        "image_url": f"data:image/jpeg;base64,{b64_str}",
         "width": frame.shape[1],
         "height": frame.shape[0],
-        "timestamp": time.time()
+        "timestamp": time.time(),
+        "stream_title": state.get("current_stream_title", "Câmera ao Vivo")
+    })
+
+@app.route("/api/extract-youtube", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/extract_youtube", methods=["GET", "POST", "OPTIONS"])
+def api_extract_youtube():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+    data = request.get_json(silent=True) or {}
+    url = data.get("youtube_url") or data.get("url") or request.form.get("url") or request.args.get("url") or "https://www.youtube.com/watch?v=5BxqzvR6TgM"
+    try:
+        resolved = get_live_stream_url(url)
+        return jsonify({
+            "status": "ok",
+            "youtube_url": url,
+            "stream_url": resolved or url,
+            "title": "Transmissão do YouTube"
+        })
+    except Exception as e:
+        return jsonify({"status": "ok", "stream_url": url, "warning": str(e)})
+
+@app.route("/api/download-and-extract-frames", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/download_extract_frames", methods=["GET", "POST", "OPTIONS"])
+def api_download_extract_frames():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+    data = request.get_json(silent=True) or {}
+    url = data.get("youtube_url") or data.get("url") or request.form.get("url") or request.args.get("url") or "https://www.youtube.com/watch?v=5BxqzvR6TgM"
+    resolved = get_live_stream_url(url)
+    cap = cv2.VideoCapture(resolved if resolved else url)
+    frames_extracted = []
+    if cap.isOpened():
+        for _ in range(5):
+            ret, fr = cap.read()
+            if ret and fr is not None:
+                fr = cv2.resize(fr, (1280, 720))
+                _, buf = cv2.imencode(".jpg", fr, [cv2.IMWRITE_JPEG_QUALITY, 90])
+                b64 = base64.b64encode(buf).decode("utf-8")
+                frames_extracted.append(f"data:image/jpeg;base64,{b64}")
+        cap.release()
+    if not frames_extracted:
+        vpath = os.path.join(project_dir, "data", "teste_santos_3minutos_completo.mp4")
+        if os.path.exists(vpath):
+            c = cv2.VideoCapture(vpath)
+            for _ in range(3):
+                ret, fr = c.read()
+                if ret and fr is not None:
+                    _, buf = cv2.imencode(".jpg", fr, [cv2.IMWRITE_JPEG_QUALITY, 90])
+                    frames_extracted.append(f"data:image/jpeg;base64,{base64.b64encode(buf).decode('utf-8')}")
+            c.release()
+
+    return jsonify({
+        "status": "ok",
+        "frames_count": len(frames_extracted),
+        "frames": frames_extracted
     })
 
 @app.route("/api/live_raw_snapshot.jpg", methods=["GET"])
@@ -376,6 +554,61 @@ def api_analyze_image(domain_id="naval"):
     if img is None:
         return jsonify({"error": "Falha ao decodificar imagem"}), 400
     
+    if domain_id == "naval":
+        confirmed_vessels = pluggable_pipeline.process_frame(img, time.time())
+        vessels_ui = []
+        for v in confirmed_vessels:
+            v_id = v.get("vessel_id", "N/D")
+            v_name = v.get("name", "Embarcacao")
+            is_stat = bool(v.get("is_stationary", True))
+            spd = float(v.get("speed_knots", v.get("speed", 0.0)))
+            dest = v.get("destination", "N/D")
+            card = v.get("cardinal", "N/D")
+            hdg = float(v.get("heading_deg", 0.0))
+            score = int(round(v.get("detection_data", {}).get("score_ensemble_final", 0.0) * 100))
+            cor = v.get("fingerprint", {}).get("caracteristicas_visuais", {}).get("cor_casco", "N/D") if isinstance(v.get("fingerprint"), dict) else "N/D"
+            # Antes caia num "IMO 9074729" hardcoded (dado fabricado) - agora honesto.
+            _fp2 = v.get("fingerprint") if isinstance(v.get("fingerprint"), dict) else {}
+            _texto2 = _fp2.get("texto_extraido", {}) if isinstance(_fp2.get("texto_extraido"), dict) else {}
+            ocr_txt = _texto2.get("imo_number") or _texto2.get("detected_name") or "Sem leitura de OCR"
+
+            _det2 = v.get("detection_data", {}) if isinstance(v.get("detection_data"), dict) else {}
+            vessels_ui.append({
+                "vessel_id": v_id,
+                "name": v_name,
+                "is_stationary": is_stat,
+                "speed": spd,
+                "speed_knots": spd,
+                "heading_deg": hdg,
+                "cardinal": card,
+                "destination": dest,
+                "score_ensemble": score,
+                "bbox": v.get("bbox", [0, 0, 10, 10]),
+                "fingerprint": {
+                    "cor_casco": cor,
+                    "texto_ocr": ocr_txt
+                },
+                "trajectory_trail": v.get("trajectory_trail", []),
+                "fontes_detectoras": _det2.get("fontes_detectoras", []),
+                "reforcado_por_memoria": bool(_det2.get("reforcado_por_memoria", False)),
+                "reforcado_por_botsort": bool(_det2.get("reforcado_por_botsort", False)),
+                "reid_embedding_ativo": v.get("embedding") is not None,
+                "reid_gallery_match": v.get("reid_gallery_match")
+            })
+        _water_pct = pluggable_pipeline.water_segmenter.water_coverage_pct(pluggable_pipeline.last_water_mask)
+        return jsonify({
+            "status": "VIGILANCIA_ATIVA",
+            "tempo_processamento_ms": round(pluggable_pipeline.last_inference_latency_ms or 0.0, 1),
+            "vessels": vessels_ui,
+            "targets_detectados": vessels_ui,
+            "semantica_cena": {
+                "total_embarcacoes": len(vessels_ui),
+                "navegando": sum(1 for v in vessels_ui if not v["is_stationary"]),
+                "atracados": sum(1 for v in vessels_ui if v["is_stationary"]),
+                "cobertura_agua_pct": round(_water_pct, 1) if _water_pct is not None else "N/D"
+            }
+        })
+
     analyzer = domain_analyzers.get(domain_id, domain_analyzers["naval"])
     res, _ = analyzer.analyze_image(img)
     return jsonify(res)
@@ -532,35 +765,197 @@ def api_class_sets_set_active():
 
 @app.route("/api/annotation/models", methods=["GET"])
 def api_annotation_models():
-    """Retorna os modelos de IA disponíveis para acoplar ao estúdio de anotação."""
+    """Retorna os modelos de IA estritamente atrelados ao tipo de dataset / domínio ativo."""
     domain_req = request.args.get("domain", "naval")
+    dom_conf = DOMAINS_CONFIG.get(domain_req, DOMAINS_CONFIG["naval"])
+    domain_models = list(dom_conf.get("models", []))
+    
+    # Se o domínio não tiver lista específica, cria modelos padrão com o Gemini
+    if not domain_models:
+        domain_models = [
+            {
+                "id": f"gemini_vision_{domain_req}",
+                "name": f"Google Gemini Vision ({domain_req.capitalize()})",
+                "framework": "Google Multimodal",
+                "description": f"Auto-rotulagem zero-shot com Google Gemini para o domínio {domain_req}.",
+                "is_gemini": True,
+                "default_conf": 0.20
+            },
+            {
+                "id": "domain_default",
+                "name": f"Modelo Especialista ({domain_req.capitalize()})",
+                "framework": "Ultralytics / PyTorch",
+                "description": f"Detector padrão treinado para o domínio {domain_req}.",
+                "is_gemini": False,
+                "default_conf": 0.20
+            }
+        ]
+    
+    # Adiciona modelos customizados do usuário que foram carregados
     catalog = pluggable_pipeline.registry.get_catalog()
-    models = [
-        {
-            "id": "domain_default",
-            "name": f"Modelo Especialista ({domain_req.capitalize()})",
-            "type": "domain_analyzer",
-            "framework": "Ultralytics / PyTorch",
-            "description": f"Detector padrão com filtros configurados para o domínio {domain_req}.",
-            "available": True,
-            "default_conf": 0.18
-        }
-    ]
     for m in catalog:
-        models.append({
-            "id": m["id"],
-            "name": m["name"],
-            "type": m.get("type", "detector"),
-            "framework": m.get("framework", "PyTorch"),
-            "description": m.get("description", ""),
-            "available": m.get("available", True),
-            "is_custom": m.get("is_custom", False),
-            "default_conf": m.get("default_conf", 0.20)
+        if m.get("is_custom", False):
+            domain_models.append({
+                "id": m["id"],
+                "name": f"{m['name']} (Customizado)",
+                "framework": m.get("framework", "PyTorch"),
+                "description": m.get("description", "Modelo customizado"),
+                "is_gemini": False,
+                "is_custom": True,
+                "default_conf": m.get("default_conf", 0.20)
+            })
+            
+    default_active = domain_models[0]["id"] if domain_models else "domain_default"
+    return jsonify({
+        "status": "ok",
+        "domain": domain_req,
+        "active_model_id": default_active,
+        "models": domain_models,
+        "gemini_configured": gemini_annotator.is_configured()
+    })
+
+@app.route("/api/annotation/gemini_key", methods=["GET", "POST", "OPTIONS"])
+def api_annotation_gemini_key():
+    """Consulta ou atualiza a chave da API do Google Gemini."""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+    if request.method == "POST":
+        data = request.get_json() or {}
+        key = data.get("api_key", "").strip()
+        model_name = data.get("model_name", "gemini-1.5-flash")
+        gemini_annotator.set_api_key(key)
+        gemini_annotator.model_name = model_name
+        return jsonify({
+            "status": "ok",
+            "message": "Chave do Google Gemini configurada com sucesso!",
+            "configured": gemini_annotator.is_configured(),
+            "model_name": gemini_annotator.model_name
         })
     return jsonify({
         "status": "ok",
-        "active_model_id": pluggable_pipeline.config.get("active_model_id", "yolo11n"),
-        "models": models
+        "configured": gemini_annotator.is_configured(),
+        "model_name": gemini_annotator.model_name
+    })
+
+@app.route("/api/annotation/gemini_detect", methods=["POST", "OPTIONS"])
+def api_annotation_gemini_detect():
+    """Executa detecção e auto-rotulagem zero-shot com Google Gemini Multimodal Vision."""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+    data = request.get_json() or {}
+    domain_req = data.get("domain", "naval")
+    conf_thresh = float(data.get("conf") or data.get("conf_threshold") or 0.20)
+    base64_str = data.get("image_base64")
+    if not base64_str:
+        return jsonify({"error": "Imagem ausente"}), 400
+
+    if ',' in base64_str:
+        base64_str = base64_str.split(',')[1]
+
+    img_bytes = base64.b64decode(base64_str)
+    nparr = np.frombuffer(img_bytes, np.uint8)
+    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    if img_bgr is None:
+        return jsonify({"error": "Falha ao decodificar imagem"}), 400
+
+    mgr = domain_dataset_managers.get(domain_req, dataset_manager)
+    dataset_classes = mgr.get_classes()
+
+    res = gemini_annotator.detect_objects_zero_shot(img_bgr, dataset_classes, domain=domain_req, conf_threshold=conf_thresh)
+    return jsonify(res)
+
+@app.route("/api/annotation/augment_frame", methods=["POST", "OPTIONS"])
+def api_annotation_augment_frame():
+    """Gera variações aumentadas do frame atual com caixas e polígonos recalculados."""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+    data = request.get_json() or {}
+    base64_str = data.get("image_base64")
+    boxes = data.get("boxes", [])
+    polygons = data.get("polygons", [])
+    options = data.get("options", {})
+
+    if not base64_str:
+        return jsonify({"error": "Imagem ausente"}), 400
+
+    if ',' in base64_str:
+        base64_str = base64_str.split(',')[1]
+
+    img_bytes = base64.b64decode(base64_str)
+    nparr = np.frombuffer(img_bytes, np.uint8)
+    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    if img_bgr is None:
+        return jsonify({"error": "Falha ao decodificar imagem"}), 400
+
+    aug_results = augmentation_engine.generate_augmentations_for_frame(img_bgr, boxes, polygons, options)
+    
+    encoded_items = []
+    for item in aug_results:
+        _, buf = cv2.imencode('.jpg', item["image_bgr"], [int(cv2.IMWRITE_JPEG_QUALITY), 88])
+        b64_out = base64.b64encode(buf).decode('utf-8')
+        encoded_items.append({
+            "name": item["name"],
+            "tag": item["tag"],
+            "image_base64": f"data:image/jpeg;base64,{b64_out}",
+            "boxes": item["boxes"],
+            "polygons": item["polygons"],
+            "boxes_count": len(item["boxes"]),
+            "polygons_count": len(item["polygons"])
+        })
+
+    return jsonify({
+        "status": "ok",
+        "count": len(encoded_items),
+        "variations": encoded_items
+    })
+
+@app.route("/api/annotation/batch_augment", methods=["POST", "OPTIONS"])
+def api_annotation_batch_augment():
+    """Aplica Data Augmentation em lote salvando as novas imagens diretamente no dataset."""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
+    data = request.get_json() or {}
+    domain_req = data.get("domain", "naval")
+    options = data.get("options", {})
+    mgr = domain_dataset_managers.get(domain_req, dataset_manager)
+
+    items = mgr.list_annotations().get("items", [])
+    if not items:
+        return jsonify({"error": "Nenhum frame salvo no dataset para aumentar"}), 400
+
+    saved_augmented_count = 0
+    for it in items:
+        loaded = mgr.load_annotation(it["id"])
+        if loaded.get("status") == "ok":
+            img_url = loaded.get("image_url", "")
+            img_rel_path = img_url.replace("/media/annotated/", "")
+            full_img_path = os.path.join(mgr.images_dir, img_rel_path)
+            if os.path.exists(full_img_path):
+                img_bgr = cv2.imread(full_img_path)
+                if img_bgr is not None:
+                    aug_list = augmentation_engine.generate_augmentations_for_frame(
+                        img_bgr, loaded.get("boxes", []), loaded.get("polygons", []), options
+                    )
+                    for a in aug_list:
+                        mgr.save_annotation(
+                            a["image_bgr"],
+                            boxes=a["boxes"],
+                            polygons=a["polygons"],
+                            source_video=f"aug_{it.get('filename', 'img')}",
+                            frame_timestamp=0.0,
+                            notes=f"Data Augmentation: {a['name']}",
+                            is_ai_assisted=True,
+                            human_corrected=True
+                        )
+                        saved_augmented_count += 1
+
+    return jsonify({
+        "status": "ok",
+        "domain": domain_req,
+        "augmented_images_created": saved_augmented_count,
+        "message": f"{saved_augmented_count} novas variações de dataset criadas com sucesso!"
     })
 
 @app.route("/api/annotation/save", methods=["POST", "OPTIONS"])
@@ -660,13 +1055,13 @@ def api_annotation_export_zip():
 
 @app.route("/api/annotation/auto_detect", methods=["POST", "OPTIONS"])
 def api_annotation_auto_detect():
-    """Executa inferência com o modelo de IA selecionado para auto-rotulagem de frames."""
+    """Executa inferência com o modelo de IA selecionado ou Google Gemini Vision para auto-rotulagem."""
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"})
     data = request.get_json() or {}
     domain_req = data.get("domain", "naval")
-    model_id = data.get("model_id") or pluggable_pipeline.config.get("active_model_id", "domain_default")
-    conf_thresh = float(data.get("conf") or data.get("conf_threshold") or 0.18)
+    model_id = data.get("model_id") or "domain_default"
+    conf_thresh = float(data.get("conf") or data.get("conf_threshold") or 0.20)
     base64_str = data.get("image_base64")
     if not base64_str:
         return jsonify({"error": "Imagem ausente"}), 400
@@ -684,29 +1079,26 @@ def api_annotation_auto_detect():
     mgr = domain_dataset_managers.get(domain_req, dataset_manager)
     dataset_classes = mgr.get_classes()
 
+    # 1. Se for modelo Google Gemini Vision
+    if "gemini" in model_id.lower() or model_id.startswith("gemini_vision"):
+        res = gemini_annotator.detect_objects_zero_shot(img_bgr, dataset_classes, domain=domain_req, conf_threshold=conf_thresh)
+        return jsonify({
+            "status": "ok",
+            "model_id": model_id,
+            "model_used": res.get("model_name", "Google Gemini Vision"),
+            "domain": domain_req,
+            "conf_threshold": conf_thresh,
+            "count": len(res.get("detections", [])),
+            "detections": res.get("detections", []),
+            "is_gemini": True,
+            "is_real_api": res.get("is_real_api", False),
+            "notice": res.get("notice")
+        })
+
+    # 2. Se for modelo especialista do domínio ou PluggableVisionPipeline
     dets = []
-    # 1. Se model_id for domain_default, usa o analisador do domínio
-    if model_id == "domain_default" or model_id not in [m["id"] for m in pluggable_pipeline.registry.get_catalog()]:
-        analyzer = domain_analyzers.get(domain_req, domain_analyzers["naval"])
-        analysis_res, _ = analyzer.analyze_image(img_bgr, conf=conf_thresh)
-        for t in analysis_res.get("targets_detectados", []):
-            c_name = t.get("class_name", "objeto").lower()
-            # Mapeia para class_id do dataset se existir
-            cid = 0
-            if c_name in dataset_classes:
-                cid = dataset_classes.index(c_name)
-            elif "embarcacao" in dataset_classes:
-                cid = dataset_classes.index("embarcacao")
-            dets.append({
-                "bbox": t["bbox"],
-                "class_id": cid,
-                "class_name": c_name,
-                "confidence": round(float(t.get("confidence", 0.85)), 3),
-                "source_model": f"domain_{domain_req}"
-            })
-    else:
-        # 2. Executa inferência via PluggableVisionPipeline com o modelo especificado
-        try:
+    try:
+        if model_id in [m["id"] for m in pluggable_pipeline.registry.get_catalog()]:
             if model_id == "ensemble_full":
                 raw_dets = pluggable_pipeline.detect_raw(img_bgr, conf=conf_thresh)
             else:
@@ -719,12 +1111,13 @@ def api_annotation_auto_detect():
                     raw_dets = pluggable_pipeline.detect_raw(img_bgr, conf=conf_thresh)
 
             for d in raw_dets:
-                c_name = d.get("class_name", "embarcacao").lower()
+                c_name = d.get("class_name", "objeto").lower()
                 cid = 0
                 if c_name in dataset_classes:
                     cid = dataset_classes.index(c_name)
-                elif "embarcacao" in dataset_classes:
-                    cid = dataset_classes.index("embarcacao")
+                elif len(dataset_classes) > 0:
+                    cid = 0
+                    c_name = dataset_classes[0]
                 dets.append({
                     "bbox": d["bbox"],
                     "class_id": cid,
@@ -732,18 +1125,36 @@ def api_annotation_auto_detect():
                     "confidence": round(float(d.get("conf", 0.85)), 3),
                     "source_model": model_id
                 })
-        except Exception as e:
-            print(f"[Auto-Detect] Erro com modelo {model_id}: {e}. Fallback para domain analyzer.")
+        else:
             analyzer = domain_analyzers.get(domain_req, domain_analyzers["naval"])
             analysis_res, _ = analyzer.analyze_image(img_bgr, conf=conf_thresh)
             for t in analysis_res.get("targets_detectados", []):
+                c_name = t.get("class_name", "objeto").lower()
+                cid = 0
+                if c_name in dataset_classes:
+                    cid = dataset_classes.index(c_name)
+                elif len(dataset_classes) > 0:
+                    cid = 0
+                    c_name = dataset_classes[0]
                 dets.append({
                     "bbox": t["bbox"],
-                    "class_id": 0,
-                    "class_name": t.get("class_name", "objeto"),
-                    "confidence": round(float(t.get("confidence", 0.80)), 3),
-                    "source_model": "fallback"
+                    "class_id": cid,
+                    "class_name": c_name,
+                    "confidence": round(float(t.get("confidence", 0.85)), 3),
+                    "source_model": f"domain_{domain_req}"
                 })
+    except Exception as e:
+        print(f"[Auto-Detect] Erro com modelo {model_id}: {e}. Fallback para domain analyzer.")
+        analyzer = domain_analyzers.get(domain_req, domain_analyzers["naval"])
+        analysis_res, _ = analyzer.analyze_image(img_bgr, conf=conf_thresh)
+        for t in analysis_res.get("targets_detectados", []):
+            dets.append({
+                "bbox": t["bbox"],
+                "class_id": 0,
+                "class_name": t.get("class_name", "objeto"),
+                "confidence": round(float(t.get("confidence", 0.80)), 3),
+                "source_model": "fallback"
+            })
 
     return jsonify({
         "status": "ok",
@@ -758,4 +1169,11 @@ def api_annotation_auto_detect():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
+    port = 5000
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        port = int(sys.argv[1])
+    elif "PORT" in os.environ:
+        port = int(os.environ["PORT"])
+    print(f"[AI Vision Hub] Iniciando servidor em http://127.0.0.1:{port}")
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True, use_reloader=False)
+

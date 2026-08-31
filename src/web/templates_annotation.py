@@ -200,6 +200,55 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         .cvat-btn.danger:hover { background: #cf1322; border-color: #f5222d; }
         .cvat-btn.icon-only { padding: 4px 7px; }
 
+        /* Estilo dos Botões com Brilho conforme Referência do Usuário */
+        .btn-augmentation-glow {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.22) 0%, rgba(126, 34, 206, 0.38) 100%);
+            border: 1px solid rgba(192, 132, 252, 0.80);
+            color: #f3e8ff;
+            font-weight: 600;
+            font-size: 11.5px;
+            padding: 4px 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 8px rgba(168, 85, 247, 0.25);
+            text-decoration: none;
+        }
+        .btn-augmentation-glow:hover {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.40) 0%, rgba(126, 34, 206, 0.60) 100%);
+            border-color: #d8b4fe;
+            color: #ffffff;
+            box-shadow: 0 0 16px rgba(168, 85, 247, 0.60);
+            transform: translateY(-1px);
+        }
+
+        .btn-auto-ia-glow {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.28) 0%, rgba(29, 78, 216, 0.48) 100%);
+            border: 1px solid rgba(96, 165, 250, 0.85);
+            color: #eff6ff;
+            font-weight: 600;
+            font-size: 11.5px;
+            padding: 4px 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.30);
+            text-decoration: none;
+        }
+        .btn-auto-ia-glow:hover {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.48) 0%, rgba(29, 78, 216, 0.70) 100%);
+            border-color: #bfdbfe;
+            color: #ffffff;
+            box-shadow: 0 0 16px rgba(59, 130, 246, 0.65);
+            transform: translateY(-1px);
+        }
+
         .model-selector-group {
             display: flex;
             align-items: center;
@@ -562,19 +611,19 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
 
             <!-- SELETOR DE MODO COMPACTO -->
             <div class="source-mode-toggle">
-                <button class="mode-btn active" id="mode-btn-video" title="Vídeo Gravado (.mp4)">📁 Gravado</button>
-                <button class="mode-btn" id="mode-btn-live" title="Transmissão ao Vivo">🔴 Ao Vivo</button>
+                <button class="mode-btn active" id="mode-btn-video" title="Vídeo Gravado (.mp4)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Gravado</button>
+                <button class="mode-btn" id="mode-btn-live" title="Transmissão ao Vivo"><svg width="9" height="9" viewBox="0 0 24 24" fill="#ff4d4f" style="vertical-align:-1px; margin-right:3px;"><circle cx="12" cy="12" r="10"/></svg>Ao Vivo</button>
             </div>
 
             <span class="task-file-badge" id="current-video-title" title="Fonte Ativa">teste_santos_3minutos_completo.mp4</span>
 
             <!-- SELETOR DE MODELO DE IA ATRELADO NO HEADER -->
             <div class="model-selector-group" title="Modelo de IA Atrelado para Percepção e Auto-Rotulagem">
-                <span class="ai-active-indicator">🤖 Modelo:</span>
+                <span class="ai-active-indicator"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>Modelo:</span>
                 <select class="cvat-select" id="select-ai-model-header" style="width:auto; margin:0; padding:2px 6px; font-size:11px; font-weight:600; background:#221b33; border:1px solid #722ed1; color:#fff; border-radius:3px;">
                     <option value="domain_default">Modelo Especialista</option>
                 </select>
-                <button class="mode-btn active" id="btn-toggle-auto-ai" style="padding:2px 6px; font-size:10px; border-radius:3px;" title="Executar Detecção Automaticamente ao Pausar ou Mudar de Frame">⚡ Auto-IA: ON</button>
+                <button class="mode-btn active" id="btn-toggle-auto-ai" style="padding:2px 6px; font-size:10px; border-radius:3px;" title="Executar Detecção Automaticamente ao Pausar ou Mudar de Frame"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Auto-IA: ON</button>
             </div>
         </div>
 
@@ -593,28 +642,34 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 <button class="nav-icon-btn" id="btn-zoom-out" title="Zoom -">-</button>
                 <span class="zoom-indicator" id="zoom-level">100%</span>
                 <button class="nav-icon-btn" id="btn-zoom-in" title="Zoom +">+</button>
-                <button class="nav-icon-btn" id="btn-fit-screen" title="Ajustar à Tela (Ctrl+0)">⛶</button>
+                <button class="nav-icon-btn" id="btn-fit-screen" title="Ajustar à Tela (Ctrl+0)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
             </div>
         </div>
 
         <div class="header-right">
-            <button class="cvat-btn ai" id="btn-ai-auto" title="Executar Inferência do Modelo de IA no Frame Atual (A)">
-                🤖 Auto-IA
+            <button class="btn-augmentation-glow" id="btn-header-augmentation" title="Abrir Estúdio de Data Augmentation para o Dataset (Variações, Flip, Ruído, Clima)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2"><path d="M15 4l5 5L7 22H2v-5L15 4z"/><path d="M18 2l3 3"/><path d="M2 9l2-2"/><path d="M9 2l2 2"/></svg>Augmentation
+            </button>
+            <button class="btn-auto-ia-glow" id="btn-ai-auto" title="Executar Auto-Rotulagem com IA / Google Gemini Vision no Frame (A)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9 12 2"/><circle cx="18" cy="6" r="1.2" fill="#60a5fa"/></svg>Auto IA
             </button>
             <button class="cvat-btn danger" id="btn-delete-all-boxes" title="Deletar TODAS as anotações deste frame para refazer do zero (Alt+C)">
-                🗑️ Deletar Tudo
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Deletar Tudo
             </button>
             <button class="cvat-btn success" id="btn-save-yolo" title="Salvar Anotações Corrigidas no Dataset YOLO (Ctrl+S)">
-                💾 Salvar
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar
             </button>
             <a href="/api/annotation/export_zip" class="cvat-btn" id="btn-export-zip" title="Exportar Dataset YOLO (.ZIP)">
-                📦 Exportar
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>Exportar
             </a>
+            <button class="cvat-btn icon-only" id="btn-open-gemini-modal" title="Configurar Google Gemini Vision API Key">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
             <button class="cvat-btn icon-only" id="btn-open-shortcuts" title="Atalhos de Teclado">
-                ⌨
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8.01"/><line x1="10" y1="8" x2="10" y2="8.01"/><line x1="14" y1="8" x2="14" y2="8.01"/><line x1="18" y1="8" x2="18" y2="8.01"/><line x1="6" y1="12" x2="6" y2="12.01"/><line x1="10" y1="12" x2="10" y2="12.01"/><line x1="14" y1="12" x2="14" y2="12.01"/><line x1="18" y1="12" x2="18" y2="12.01"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
             </button>
             <a href="/" class="cvat-btn primary" title="Painel Principal">
-                ⚓ Painel
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></svg>Painel
             </a>
         </div>
     </div>
@@ -637,7 +692,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             </button>
             <div class="tool-divider"></div>
             <button class="tool-icon" id="tool-run-ai-left" title="Executar Modelo de IA no Frame (A)">
-                <span style="font-size:14px;">🤖</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
             </button>
             <button class="tool-icon" id="tool-del-box" title="Excluir Objeto Selecionado (Del / Backspace)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -655,9 +710,9 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 <span style="color:var(--cvat-text-disabled);">|</span>
                 <span id="canvas-active-tool-badge" style="color:var(--cvat-accent);">Retângulo (N)</span>
                 <span style="color:var(--cvat-text-disabled);">|</span>
-                <span id="canvas-ai-badge" style="color:#b37feb; font-weight:700; cursor:pointer;" title="Clique para rodar inferência da IA">🤖 IA: YOLO11n (0.20)</span>
-                <button class="cvat-btn ai" id="btn-hud-run-ai" style="padding:2px 7px; font-size:10px;" title="Executar Modelo no Frame (A)">🤖 Rodar IA</button>
-                <button class="cvat-btn danger" id="btn-hud-clear-all" style="padding:2px 7px; font-size:10px;" title="Limpar Todas as Anotações (Alt+C)">🗑️ Limpar Tudo</button>
+                <span id="canvas-ai-badge" style="color:#b37feb; font-weight:700; cursor:pointer;" title="Clique para rodar inferência da IA"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>IA: YOLO11n (0.20)</span>
+                <button class="cvat-btn ai" id="btn-hud-run-ai" style="padding:2px 7px; font-size:10px;" title="Executar Modelo no Frame (A)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Rodar IA</button>
+                <button class="cvat-btn danger" id="btn-hud-clear-all" style="padding:2px 7px; font-size:10px;" title="Limpar Todas as Anotações (Alt+C)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Limpar Tudo</button>
             </div>
 
             <!-- LIVE BADGE -->
@@ -687,7 +742,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             <div class="sidebar-tabs">
                 <div class="sidebar-tab active" data-tab="objects">Objetos (<span id="count-objects">0</span>)</div>
                 <div class="sidebar-tab" data-tab="labels">Classes</div>
-                <div class="sidebar-tab" data-tab="ai">🤖 IA &amp; Correção</div>
+                <div class="sidebar-tab" data-tab="ai"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>IA &amp; Correção</div>
                 <div class="sidebar-tab" data-tab="dataset">Dataset</div>
             </div>
 
@@ -752,7 +807,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     <!-- MODELO ATRELADO -->
                     <div style="background:#1b1528; border:1px solid #722ed1; border-radius:4px; padding:10px; margin-bottom:10px;">
                         <span style="color:#d3adf7; font-size:11px; font-weight:700; text-transform:uppercase; display:flex; align-items:center; gap:6px;">
-                            🤖 Modelo de IA Atrelado
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>Modelo de IA Atrelado
                         </span>
                         <select class="cvat-select" id="select-ai-model-sidebar" style="border-color:#722ed1; margin-top:6px;">
                             <option value="domain_default">Modelo Especialista do Domínio</option>
@@ -770,7 +825,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     <!-- PARÂMETROS DE DETECÇÃO -->
                     <div style="background:var(--cvat-bg-surface); padding:10px; border-radius:4px; border:1px solid var(--cvat-border); margin-bottom:10px; display:flex; flex-direction:column; gap:8px;">
                         <span style="color:var(--cvat-text-primary); font-size:11px; font-weight:700; text-transform:uppercase;">
-                            ⚙️ Parâmetros de Inferência
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px; margin-right:3px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Parâmetros de Inferência
                         </span>
                         <div class="setting-row">
                             <span>Limiar de Confiança:</span>
@@ -787,19 +842,19 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     <!-- AÇÕES HUMAN-IN-THE-LOOP & CORREÇÃO -->
                     <div style="display:flex; flex-direction:column; gap:6px;">
                         <button class="cvat-btn ai" id="btn-run-ai-sidebar" style="width:100%; justify-content:center; padding:8px 0; font-size:11.5px;">
-                            🤖 Executar Inferência da IA no Frame (A)
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Executar Inferência da IA no Frame (A)
                         </button>
                         <button class="cvat-btn danger" id="btn-clear-all-ai" style="width:100%; justify-content:center; padding:8px 0; font-size:11.5px;">
-                            🗑️ Deletar Todas as Anotações (Limpar Frame)
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Deletar Todas as Anotações (Limpar Frame)
                         </button>
                         <button class="cvat-btn success" id="btn-save-corrected-sidebar" style="width:100%; justify-content:center; padding:8px 0; font-size:11.5px;">
-                            💾 Salvar Frame Corrigido no Dataset (Ctrl+S)
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar Frame Corrigido no Dataset (Ctrl+S)
                         </button>
                     </div>
 
                     <!-- DICA DE ACTIVE LEARNING -->
                     <div style="background:rgba(250,173,20,0.08); border:1px solid rgba(250,173,20,0.3); border-radius:4px; padding:8px; margin-top:10px; font-size:10px; color:#d48806; line-height:1.4;">
-                        💡 <strong>Fluxo Human-in-the-Loop</strong>:<br>
+                        <strong>Fluxo Human-in-the-Loop</strong>:<br>
                         1. Pause o vídeo no frame com erros da IA.<br>
                         2. A IA gera as caixas previstas.<br>
                         3. Edite as caixas erradas ou clique em <em>Deletar Todas</em> para refazer do zero.<br>
@@ -812,11 +867,11 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     <!-- IMPORTAR DATASET EXISTENTE -->
                     <div style="background:rgba(82,196,26,0.08); padding:10px; border-radius:4px; border:1px solid rgba(82,196,26,0.3); margin-bottom:8px;">
                         <span style="color:var(--cvat-success); font-size:11px; font-weight:700; text-transform:uppercase; display:block; margin-bottom:4px;">
-                            📥 Continuar Dataset Existente
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Continuar Dataset Existente
                         </span>
                         <input type="file" id="input-import-dataset-zip" accept=".zip" style="display:none;">
                         <button class="cvat-btn success" style="width:100%; justify-content:center;" onclick="document.getElementById('input-import-dataset-zip').click()">
-                            📦 Puxar Dataset (.ZIP)
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>Puxar Dataset (.ZIP)
                         </button>
                         <span style="font-size:9.5px; color:var(--cvat-text-secondary); display:block; margin-top:4px;">
                             Carrega imagens, anotações de BBox e polígonos para continuar rotulando.
@@ -825,27 +880,27 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
 
                     <!-- SEÇÃO: MODO VÍDEO GRAVADO -->
                     <div id="section-recorded-video" style="display:flex; flex-direction:column; gap:6px; background:var(--cvat-bg-surface); padding:10px; border-radius:4px; border:1px solid var(--cvat-border);">
-                        <span style="color:var(--cvat-accent); font-size:11px; font-weight:700; text-transform:uppercase;">📁 Arquivo de Vídeo Gravado</span>
+                        <span style="color:var(--cvat-accent); font-size:11px; font-weight:700; text-transform:uppercase;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Arquivo de Vídeo Gravado</span>
                         <select class="cvat-select" id="select-video-source">
                             <option value="teste_santos_3minutos_completo.mp4">Porto de Santos - 3 Minutos Completo (MP4)</option>
                             <option value="teste_porto_santos_1min.mp4">Porto de Santos - 1 Minuto (MP4)</option>
                         </select>
                         <input type="file" id="input-upload-video" accept="video/mp4,video/webm" style="display:none;">
                         <button class="cvat-btn" style="width:100%; justify-content:center; margin-top:2px;" onclick="document.getElementById('input-upload-video').click()">
-                            📁 Carregar Outro Vídeo (.mp4)
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Carregar Outro Vídeo (.mp4)
                         </button>
                     </div>
 
                     <!-- SEÇÃO: MODO AO VIVO (YOUTUBE / RTSP) -->
                     <div id="section-live-video" style="display:none; flex-direction:column; gap:6px; background:rgba(211,32,41,0.08); padding:10px; border-radius:4px; border:1px solid rgba(211,32,41,0.35);">
-                        <span style="color:#ff4d4f; font-size:11px; font-weight:700; text-transform:uppercase;">🔴 Transmissão ao Vivo (YouTube / RTSP)</span>
+                        <span style="color:#ff4d4f; font-size:11px; font-weight:700; text-transform:uppercase;"><svg width="9" height="9" viewBox="0 0 24 24" fill="#ff4d4f" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"/></svg>Transmissão ao Vivo (YouTube / RTSP)</span>
                         <input type="text" class="cvat-input" id="input-youtube-live-url" value="https://www.youtube.com/watch?v=5BxqzvR6TgM" placeholder="URL da Live do YouTube">
                         <div style="display:flex; gap:6px;">
                             <button class="cvat-btn primary" id="btn-update-live-url" style="flex:1; justify-content:center;">
-                                📡 Atualizar Live
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12" y2="20.01"/></svg>Atualizar Live
                             </button>
                             <button class="cvat-btn live-freeze" id="btn-live-freeze-sidebar" style="flex:1; justify-content:center;">
-                                📸 Congelar
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:3px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Congelar
                             </button>
                         </div>
                     </div>
@@ -896,8 +951,8 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         <div id="player-bar-recorded" style="display:flex; align-items:center; width:100%; gap:12px;">
             <div class="player-controls">
                 <button class="play-btn" id="btn-play-pause" title="Reproduzir / Pausar (Espaço)">▶</button>
-                <button class="nav-icon-btn" id="btn-step-prev" title="Frame anterior (D / [)">⏮</button>
-                <button class="nav-icon-btn" id="btn-step-next" title="Próximo frame (F / ])">⏭</button>
+                <button class="nav-icon-btn" id="btn-step-prev" title="Frame anterior (D / [)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+                <button class="nav-icon-btn" id="btn-step-next" title="Próximo frame (F / ])"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
             </div>
 
             <div class="timeline-slider-wrap">
@@ -915,7 +970,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             </div>
 
             <button class="cvat-btn live-freeze" id="btn-toggle-live-freeze">
-                📸 Congelar Frame para Anotação (Espaço)
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Congelar Frame para Anotação (Espaço)
             </button>
 
             <span style="font-size:11px; color:var(--cvat-text-secondary); margin-left:auto;" id="live-stream-status-msg">
@@ -932,7 +987,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         <div class="modal-box">
             <div class="modal-header">
                 <span>Criar Novo Conjunto de Classes</span>
-                <button class="obj-btn" onclick="document.getElementById('modal-class-set').style.display='none'">✕</button>
+                <button class="obj-btn" onclick="document.getElementById('modal-class-set').style.display='none'">&times;</button>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px;">
                 <div>
@@ -956,7 +1011,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         <div class="modal-box">
             <div class="modal-header">
                 <span>Atalhos de Teclado (CVAT Mode)</span>
-                <button class="obj-btn" onclick="document.getElementById('shortcuts-modal').style.display='none'">✕</button>
+                <button class="obj-btn" onclick="document.getElementById('shortcuts-modal').style.display='none'">&times;</button>
             </div>
             <div class="shortcut-grid">
                 <div><span class="sc-key">Espaço</span> Play/Pause (Vídeo) ou Congelar/Retomar (Ao Vivo)</div>
@@ -971,6 +1026,88 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 <div><span class="sc-key">Ctrl + S</span> Salvar no Dataset YOLO</div>
                 <div><span class="sc-key">Ctrl + 0</span> Ajustar à Tela (Fit)</div>
                 <div><span class="sc-key">1 a 9</span> Selecionar Classe</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DATA AUGMENTATION STUDIO -->
+    <div class="modal-backdrop" id="modal-augmentation">
+        <div class="modal-box" style="width: 580px; max-width: 95vw;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(168, 85, 247, 0.4);">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2"><path d="M15 4l5 5L7 22H2v-5L15 4z"/><path d="M18 2l3 3"/><path d="M2 9l2-2"/><path d="M9 2l2 2"/></svg>
+                    <span style="color:#f3e8ff; font-weight:700;">Data Augmentation Studio (YOLO)</span>
+                </div>
+                <button class="obj-btn" onclick="document.getElementById('modal-augmentation').style.display='none'">&times;</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px; font-size:11.5px;">
+                <div style="background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.25); border-radius:4px; padding:8px 10px; color:#e9d5ff; font-size:11px;">
+                    Gera novas amostras sintéticas de treino preservando e recalculando automaticamente todas as <strong>Bounding Boxes</strong> e <strong>Polígonos de Segmentação</strong>.
+                </div>
+
+                <div>
+                    <label style="font-weight:700; color:var(--cvat-text-primary); margin-bottom:6px; display:block;">Transformações Selecionadas:</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="chk-aug-flip-h" checked> Flip Horizontal (Espelhamento X)</label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="chk-aug-bright-high" checked> Sol Forte / Alto Contraste (+20%)</label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="chk-aug-bright-low" checked> Sombra / Baixa Luz (-20%)</label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="chk-aug-noise" checked> Ruído de Sensor / Granulação</label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="chk-aug-rot-pos" checked> Rotação Leve (+7.5° Afim)</label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="chk-aug-rot-neg" checked> Rotação Leve (-7.5° Afim)</label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="chk-aug-fog"> Neblina / Maresia / Clima</label>
+                    </div>
+                </div>
+
+                <!-- Preview Grid -->
+                <div id="aug-preview-section" style="display:none;">
+                    <label style="font-weight:700; color:var(--cvat-text-primary); margin-bottom:6px; display:block;">Prévia das Variações do Frame Atual:</label>
+                    <div id="aug-preview-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; max-height:160px; overflow-y:auto; padding:6px; background:#141414; border:1px solid #333; border-radius:4px;"></div>
+                </div>
+
+                <div style="display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:6px; padding-top:8px; border-top:1px solid var(--cvat-border);">
+                    <button class="cvat-btn" id="btn-batch-augment-dataset" style="background:#3b1366; border-color:#722ed1; color:#fff;" title="Aumenta todas as imagens salvas do dataset">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/></svg>Aumentar Todo o Dataset
+                    </button>
+                    <div style="display:flex; gap:6px;">
+                        <button class="cvat-btn" id="btn-preview-aug-frame">Gerar Prévia</button>
+                        <button class="btn-augmentation-glow" id="btn-apply-aug-save">Salvar Variações no Dataset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GOOGLE GEMINI VISION CONFIGURATION -->
+    <div class="modal-backdrop" id="modal-gemini-config">
+        <div class="modal-box" style="width: 480px;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(59, 130, 246, 0.4);">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9 12 2"/><circle cx="18" cy="6" r="1.2" fill="#60a5fa"/></svg>
+                    <span style="color:#dbeafe; font-weight:700;">Google Gemini Vision (Configuração)</span>
+                </div>
+                <button class="obj-btn" onclick="document.getElementById('modal-gemini-config').style.display='none'">&times;</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; font-size:11.5px;">
+                <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:4px; padding:8px 10px; color:#bfdbfe; font-size:11px;">
+                    O <strong>Google Gemini Multimodal Vision</strong> realiza detecção zero-shot de alta precisão baseando-se diretamente nas classes do seu dataset.
+                </div>
+                <div>
+                    <label style="color:var(--cvat-text-secondary); display:block; margin-bottom:3px;">Modelo Gemini:</label>
+                    <select class="cvat-select" id="select-gemini-model" style="width:100%;">
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra-Rápido &amp; Inteligente)</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Máxima Precisão Grounding)</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Experimental)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="color:var(--cvat-text-secondary); display:block; margin-bottom:3px;">Chave de API (GEMINI_API_KEY / GOOGLE_API_KEY):</label>
+                    <input type="password" class="cvat-input" id="input-gemini-api-key" placeholder="AIzaSy...">
+                    <span style="font-size:10px; color:var(--cvat-text-disabled); margin-top:2px; display:block;">Se não fornecida, o assistente local heurístico opera automaticamente como fallback.</span>
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+                    <button class="cvat-btn" onclick="document.getElementById('modal-gemini-config').style.display='none'">Fechar</button>
+                    <button class="btn-auto-ia-glow" id="btn-save-gemini-key">Salvar Configuração</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1191,7 +1328,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             }
             if (video.paused) {
                 video.play();
-                btnPlay.innerText = '⏸';
+                btnPlay.innerText = 'II';
             } else {
                 video.pause();
                 btnPlay.innerText = '▶';
@@ -1242,7 +1379,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
 
         // CONTROLES DE TRANSMISSÃO AO VIVO
         async function freezeLiveFrame() {
-            showToast('📸 Congelando frame ao vivo para anotação...');
+            showToast('Congelando frame ao vivo para anotação...');
             try {
                 const res = await fetch('/api/live_raw_snapshot');
                 const d = await res.json();
@@ -1251,11 +1388,11 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     liveImg.src = d.image_base64;
                     isLiveFrozen = true;
 
-                    document.getElementById('btn-toggle-live-freeze').innerText = '▶ Retomar Transmissão ao Vivo';
+                    document.getElementById('btn-toggle-live-freeze').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>Retomar Transmissão ao Vivo';
                     document.getElementById('btn-toggle-live-freeze').className = 'cvat-btn primary';
-                    document.getElementById('live-stream-status-msg').innerText = '⏸ Frame Congelado — Pronto para Anotação';
+                    document.getElementById('live-stream-status-msg').innerText = 'Frame Congelado — Pronto para Anotação';
                     document.getElementById('live-stream-status-msg').style.color = 'var(--cvat-accent)';
-                    showToast('✔ Frame congelado! Desenhe retângulos ou polígonos.');
+                    showToast('Frame congelado! Desenhe retângulos ou polígonos.');
                 }
             } catch (e) {
                 showToast(`Erro ao congelar frame: ${e}`);
@@ -1265,7 +1402,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         async function resumeLiveStream() {
             // Se houver anotações feitas no frame congelado/carregado, salva automaticamente no dataset
             if (boxes.length > 0 || polygons.length > 0) {
-                showToast('💾 Salvando anotações do frame no dataset...');
+                showToast('Salvando anotações do frame no dataset...');
                 try {
                     const base64Data = frozenLiveImage || await getCurrentFrameBase64();
                     const res = await fetch('/api/annotation/save', {
@@ -1281,7 +1418,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     });
                     const d = await res.json();
                     if (d.status === 'ok') {
-                        showToast(`✔ Frame salvo no rodapé! Transmissão ao vivo retomada.`);
+                        showToast(`Frame salvo no rodapé! Transmissão ao vivo retomada.`);
                     }
                 } catch (e) {
                     console.error("Erro ao auto-salvar ao retomar live:", e);
@@ -1306,12 +1443,12 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 liveImg.src = `/video_feed_raw?t=${Date.now()}`;
             }, 30);
 
-            document.getElementById('btn-toggle-live-freeze').innerText = '📸 Congelar Frame para Anotação (Espaço)';
+            document.getElementById('btn-toggle-live-freeze').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Congelar Frame para Anotação (Espaço)';
             document.getElementById('btn-toggle-live-freeze').className = 'cvat-btn live-freeze';
             document.getElementById('live-stream-status-msg').innerText = 'Transmitindo em tempo real do Porto de Santos';
             document.getElementById('live-stream-status-msg').style.color = 'var(--cvat-text-secondary)';
             document.getElementById('current-video-title').innerText = 'Câmera ao Vivo - Porto de Santos';
-            showToast('▶ Transmissão ao vivo retomada.');
+            showToast('Transmissão ao vivo retomada.');
         }
 
         async function toggleLiveFreeze() {
@@ -1553,7 +1690,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 currentPolygonPoints = [];
                 renderObjectsList();
                 redrawCanvas();
-                showToast('✔ Polígono de segmentação adicionado!');
+                showToast('Polígono de segmentação adicionado!');
             }
         }
 
@@ -1742,8 +1879,8 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                         </div>
                     </div>
                     <div class="obj-actions">
-                        <button class="obj-btn" title="Ocultar/Exibir" onclick="event.stopPropagation(); toggleHideItem('bbox', ${idx})">${b.hidden ? '👁️‍🗨️' : '👁️'}</button>
-                        <button class="obj-btn del" title="Excluir" onclick="event.stopPropagation(); deleteItem('bbox', ${idx})">✕</button>
+                        <button class="obj-btn" title="Ocultar/Exibir" onclick="event.stopPropagation(); toggleHideItem('bbox', ${idx})">${b.hidden ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>' : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'}</button>
+                        <button class="obj-btn del" title="Excluir" onclick="event.stopPropagation(); deleteItem('bbox', ${idx})">&times;</button>
                     </div>
                 `;
                 item.onclick = () => {
@@ -1770,8 +1907,8 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                         </div>
                     </div>
                     <div class="obj-actions">
-                        <button class="obj-btn" title="Ocultar/Exibir" onclick="event.stopPropagation(); toggleHideItem('polygon', ${idx})">${poly.hidden ? '👁️‍🗨️' : '👁️'}</button>
-                        <button class="obj-btn del" title="Excluir" onclick="event.stopPropagation(); deleteItem('polygon', ${idx})">✕</button>
+                        <button class="obj-btn" title="Ocultar/Exibir" onclick="event.stopPropagation(); toggleHideItem('polygon', ${idx})">${poly.hidden ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>' : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'}</button>
+                        <button class="obj-btn del" title="Excluir" onclick="event.stopPropagation(); deleteItem('polygon', ${idx})">&times;</button>
                     </div>
                 `;
                 item.onclick = () => {
@@ -2051,7 +2188,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 const d = await res.json();
                 if (d.status === 'ok') {
                     availableAiModels = d.models || [];
-                    activeModelId = d.active_model_id || (availableAiModels.length > 0 ? availableAiModels[0].id : 'yolo11n');
+                    activeModelId = d.active_model_id || (availableAiModels.length > 0 ? availableAiModels[0].id : 'domain_default');
 
                     const selHeader = document.getElementById('select-ai-model-header');
                     const selSidebar = document.getElementById('select-ai-model-sidebar');
@@ -2062,7 +2199,8 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                         availableAiModels.forEach(m => {
                             const opt = document.createElement('option');
                             opt.value = m.id;
-                            opt.text = `${m.name} (${m.framework || 'PyTorch'})`;
+                            const prefix = m.is_gemini ? '✦ [Gemini Vision] ' : (m.is_custom ? '⚙ [Custom] ' : '◆ ');
+                            opt.text = `${prefix}${m.name} (${m.framework || 'PyTorch'})`;
                             if (m.id === activeModelId) opt.selected = true;
                             sel.appendChild(opt);
                         });
@@ -2078,8 +2216,14 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         function updateAiModelDisplay() {
             const m = availableAiModels.find(item => item.id === activeModelId);
             const mName = m ? m.name : activeModelId;
+            const isGem = m && m.is_gemini;
             const badge = document.getElementById('canvas-ai-badge');
-            if (badge) badge.innerText = `🤖 IA: ${mName.slice(0, 16)} (${Math.round(aiConfThreshold * 100)}%)`;
+            if (badge) {
+                const icon = isGem 
+                    ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9 12 2"/></svg>`
+                    : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>`;
+                badge.innerHTML = `${icon}IA: ${mName.slice(0, 18)} (${Math.round(aiConfThreshold * 100)}%)`;
+            }
             const desc = document.getElementById('ai-model-description');
             if (desc && m) desc.innerText = m.description || `Modelo ${m.name} acoplado para auto-rotulagem de alvos.`;
         }
@@ -2091,7 +2235,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             if (selH && selH.value !== newModelId) selH.value = newModelId;
             if (selS && selS.value !== newModelId) selS.value = newModelId;
             updateAiModelDisplay();
-            showToast(`🤖 Modelo de IA selecionado: ${newModelId}`);
+            showToast(`Modelo de IA selecionado: ${newModelId}`);
         }
 
         if (document.getElementById('select-ai-model-header')) {
@@ -2119,7 +2263,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             const chk = document.getElementById('check-auto-ai-pause');
             if (btn) {
                 btn.className = `mode-btn ${autoAiOnPause ? 'active' : ''}`;
-                btn.innerText = autoAiOnPause ? '⚡ Auto-IA: ON' : '⚡ Auto-IA: OFF';
+                btn.innerHTML = autoAiOnPause ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Auto-IA: ON' : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Auto-IA: OFF';
             }
             if (chk) chk.checked = autoAiOnPause;
             showToast(`Auto-IA ao pausar frame: ${autoAiOnPause ? 'ATIVADA' : 'DESATIVADA'}`);
@@ -2134,7 +2278,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 const btn = document.getElementById('btn-toggle-auto-ai');
                 if (btn) {
                     btn.className = `mode-btn ${autoAiOnPause ? 'active' : ''}`;
-                    btn.innerText = autoAiOnPause ? '⚡ Auto-IA: ON' : '⚡ Auto-IA: OFF';
+                    btn.innerHTML = autoAiOnPause ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Auto-IA: ON' : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Auto-IA: OFF';
                 }
                 showToast(`Auto-IA ao pausar frame: ${autoAiOnPause ? 'ATIVADA' : 'DESATIVADA'}`);
             });
@@ -2150,7 +2294,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
 
             isAiInferring = true;
             if (!isAutomated) {
-                showToast(`🤖 Executando inferência do modelo [${activeModelId}] no frame...`);
+                showToast(`Executando inferência do modelo [${activeModelId}] no frame...`);
             }
 
             try {
@@ -2195,7 +2339,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     selectedItem = { type: 'bbox', index: 0 };
                     renderObjectsList();
                     redrawCanvas();
-                    showToast(`🤖 IA [${activeModelId}]: ${d.detections.length} objeto(s) detectado(s)! Edite ou limpe para corrigir erros.`);
+                    showToast(`IA [${activeModelId}]: ${d.detections.length} objeto(s) detectado(s)! Edite ou limpe para corrigir erros.`);
                 } else {
                     if (!isAutomated) {
                         showToast(`Nenhuma detecção encontrada pelo modelo [${activeModelId}] com confiança ≥ ${Math.round(aiConfThreshold * 100)}%.`);
@@ -2225,7 +2369,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 selectedItem = null;
                 renderObjectsList();
                 redrawCanvas();
-                showToast('🗑️ Todas as anotações foram removidas! Frame limpo para corrigir os erros da IA.');
+                showToast('Todas as anotações foram removidas! Frame limpo.');
             }
         }
 
@@ -2242,6 +2386,186 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
         bindEl('btn-hud-clear-all', deleteAllAnnotations);
         bindEl('tool-clear-all', deleteAllAnnotations);
 
+        // ====================================================
+        // DATA AUGMENTATION STUDIO
+        // ====================================================
+        let latestAugmentations = [];
+
+        function openAugmentationModal() {
+            document.getElementById('modal-augmentation').style.display = 'flex';
+        }
+
+        function getSelectedAugOptions() {
+            return {
+                flip_h: document.getElementById('chk-aug-flip-h') ? document.getElementById('chk-aug-flip-h').checked : false,
+                bright_high: document.getElementById('chk-aug-bright-high') ? document.getElementById('chk-aug-bright-high').checked : false,
+                bright_low: document.getElementById('chk-aug-bright-low') ? document.getElementById('chk-aug-bright-low').checked : false,
+                noise: document.getElementById('chk-aug-noise') ? document.getElementById('chk-aug-noise').checked : false,
+                rot_pos: document.getElementById('chk-aug-rot-pos') ? document.getElementById('chk-aug-rot-pos').checked : false,
+                rot_neg: document.getElementById('chk-aug-rot-neg') ? document.getElementById('chk-aug-rot-neg').checked : false,
+                fog: document.getElementById('chk-aug-fog') ? document.getElementById('chk-aug-fog').checked : false
+            };
+        }
+
+        async function previewFrameAugmentations() {
+            showToast('Gerando prévia das variações de data augmentation...');
+            try {
+                const base64Data = await getCurrentFrameBase64();
+                const res = await fetch('/api/annotation/augment_frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image_base64: base64Data,
+                        boxes: boxes,
+                        polygons: polygons,
+                        options: getSelectedAugOptions()
+                    })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    latestAugmentations = d.variations || [];
+                    const grid = document.getElementById('aug-preview-grid');
+                    const section = document.getElementById('aug-preview-section');
+                    if (grid && section) {
+                        grid.innerHTML = '';
+                        section.style.display = 'block';
+                        latestAugmentations.forEach(item => {
+                            const card = document.createElement('div');
+                            card.style.cssText = 'background:#1f1f1f; border:1px solid #333; border-radius:3px; padding:4px; font-size:10px; text-align:center;';
+                            card.innerHTML = `
+                                <img src="${item.image_base64}" style="width:100%; height:60px; object-fit:cover; border-radius:2px; display:block;">
+                                <div style="margin-top:3px; font-weight:600; color:#c084fc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
+                                <div style="color:var(--cvat-text-secondary); font-size:9px;">${item.boxes_count} caixas, ${item.polygons_count} polígonos</div>
+                            `;
+                            grid.appendChild(card);
+                        });
+                    }
+                    showToast(`${latestAugmentations.length} variações geradas com recálculo geométrico!`);
+                } else {
+                    showToast(`Erro ao gerar variações: ${d.error || 'Falha no servidor'}`);
+                }
+            } catch (err) {
+                showToast(`Erro na geração: ${err}`);
+            }
+        }
+
+        async function saveFrameAugmentationsToDataset() {
+            if (!latestAugmentations || latestAugmentations.length === 0) {
+                await previewFrameAugmentations();
+            }
+            if (!latestAugmentations || latestAugmentations.length === 0) {
+                showToast('Nenhuma variação disponível para salvar.');
+                return;
+            }
+
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+            showToast(`Salvando ${latestAugmentations.length} variações aumentadas no dataset...`);
+
+            let savedCount = 0;
+            for (const item of latestAugmentations) {
+                try {
+                    await fetch('/api/annotation/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            domain: currentDomain,
+                            image_base64: item.image_base64,
+                            boxes: item.boxes,
+                            polygons: item.polygons,
+                            source_video: `aug_${item.tag}`,
+                            frame_timestamp: 0.0,
+                            notes: `Augmentation: ${item.name}`,
+                            is_ai_assisted: true,
+                            model_used: 'augmentation_engine',
+                            human_corrected: true
+                        })
+                    });
+                    savedCount++;
+                } catch (e) {
+                    console.error("Erro ao salvar variação:", e);
+                }
+            }
+
+            showToast(`${savedCount} imagens aumentadas salvas no dataset YOLO!`);
+            document.getElementById('modal-augmentation').style.display = 'none';
+            await loadDatasetStats();
+        }
+
+        async function applyBatchAugment() {
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
+            if (!confirm(`Aplicar Data Augmentation em TODO o dataset [${currentDomain.toUpperCase()}]?`)) return;
+
+            showToast('Executando Data Augmentation em lote...');
+            try {
+                const res = await fetch('/api/annotation/batch_augment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        domain: currentDomain,
+                        options: getSelectedAugOptions()
+                    })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    showToast(d.message || `${d.augmented_images_created} novas amostras criadas!`);
+                    document.getElementById('modal-augmentation').style.display = 'none';
+                    await loadDatasetStats();
+                } else {
+                    showToast(`Erro: ${d.error || 'Falha ao aumentar dataset'}`);
+                }
+            } catch (err) {
+                showToast(`Erro: ${err}`);
+            }
+        }
+
+        // ====================================================
+        // GOOGLE GEMINI VISION CONFIGURATION
+        // ====================================================
+        async function openGeminiConfigModal() {
+            document.getElementById('modal-gemini-config').style.display = 'flex';
+            try {
+                const res = await fetch('/api/annotation/gemini_key');
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    if (d.model_name && document.getElementById('select-gemini-model')) {
+                        document.getElementById('select-gemini-model').value = d.model_name;
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao verificar status do Gemini:", err);
+            }
+        }
+
+        async function saveGeminiKey() {
+            const key = document.getElementById('input-gemini-api-key').value.trim();
+            const modelName = document.getElementById('select-gemini-model').value;
+            showToast('Salvando configuração do Google Gemini...');
+            try {
+                const res = await fetch('/api/annotation/gemini_key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: key, model_name: modelName })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    showToast('Google Gemini Vision configurado com sucesso!');
+                    document.getElementById('modal-gemini-config').style.display = 'none';
+                    await loadAiModels();
+                }
+            } catch (err) {
+                showToast(`Erro ao salvar: ${err}`);
+            }
+        }
+
+        bindEl('btn-header-augmentation', openAugmentationModal);
+        bindEl('btn-preview-aug-frame', previewFrameAugmentations);
+        bindEl('btn-apply-aug-save', saveFrameAugmentationsToDataset);
+        bindEl('btn-batch-augment-dataset', applyBatchAugment);
+        bindEl('btn-open-gemini-modal', openGeminiConfigModal);
+        bindEl('btn-save-gemini-key', saveGeminiKey);
+
         // SALVAR ANOTAÇÃO (BBOX + POLÍGONOS) NO DATASET YOLO & CONTINUAR VÍDEO
         async function saveAnnotationYOLO() {
             if (boxes.length === 0 && polygons.length === 0) {
@@ -2249,7 +2573,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 return;
             }
 
-            showToast('💾 Gravando frame corrigido no dataset YOLO para re-treinamento da IA...');
+            showToast('Gravando frame corrigido no dataset YOLO para re-treinamento da IA...');
             try {
                 const base64Data = await getCurrentFrameBase64();
                 const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -2289,11 +2613,11 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     // 3. CONTINUAR O VÍDEO AUTOMATICAMENTE
                     if (sourceMode === 'live') {
                         resumeLiveStream();
-                        showToast(`✔ Frame Ground Truth salvo no dataset! Transmissão ao vivo retomada.`);
+                        showToast(`Frame Ground Truth salvo no dataset! Transmissão ao vivo retomada.`);
                     } else {
                         video.play();
-                        btnPlay.innerText = '⏸';
-                        showToast(`✔ Frame Ground Truth salvo no dataset! Reprodução continuada.`);
+                        btnPlay.innerText = 'II';
+                        showToast(`Frame Ground Truth salvo no dataset! Reprodução continuada.`);
                     }
                 } else {
                     showToast(`Erro ao salvar: ${d.message || 'Falha'}`);
@@ -2314,13 +2638,13 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
             const pathParts = window.location.pathname.split('/').filter(Boolean);
             const currentDomain = (pathParts.length > 0 && pathParts[0] !== 'anotar' && pathParts[0] !== 'hub') ? pathParts[0] : 'naval';
             formData.append('domain', currentDomain);
-            showToast('📦 Importando dataset ZIP e reconstruindo anotações...');
+            showToast('Importando dataset ZIP e reconstruindo anotações...');
 
             try {
                 const res = await fetch('/api/annotation/import_zip', { method: 'POST', body: formData });
                 const d = await res.json();
                 if (d.status === 'ok') {
-                    showToast(`✔ Dataset importado com sucesso: ${d.imported_images} imagens!`);
+                    showToast(`Dataset importado com sucesso: ${d.imported_images} imagens!`);
                     await loadClassSets();
                     await loadDatasetStats();
                 } else {
@@ -2340,7 +2664,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                 const res = await fetch(`/api/annotation/delete/${imageId}?domain=${currentDomain}`, { method: 'DELETE' });
                 const d = await res.json();
                 if (d.status === 'ok') {
-                    showToast('✔ Frame excluído do dataset.');
+                    showToast('Frame excluído do dataset.');
                     await loadDatasetStats();
                 }
             } catch (err) {
@@ -2376,7 +2700,7 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                             card.innerHTML = `
                                 <img class="filmstrip-thumb" src="/media/annotated/${item.filename}" alt="Frame">
                                 <span class="filmstrip-badge">${(item.num_boxes||0) + (item.num_polygons||0)} obj</span>
-                                <button class="filmstrip-del" title="Excluir" onclick="event.stopPropagation(); deleteAnnotationItem('${item.id}')">✕</button>
+                                <button class="filmstrip-del" title="Excluir" onclick="event.stopPropagation(); deleteAnnotationItem('${item.id}')">&times;</button>
                             `;
                             card.onclick = () => loadExistingAnnotation(item.id);
                             filmstrip.appendChild(card);
@@ -2397,9 +2721,9 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                             el.title = `Clique para editar o frame ${item.filename}`;
                             el.innerHTML = `
                                 <img src="/media/annotated/${item.filename}" style="width:100%; height:60px; object-fit:cover; display:block;">
-                                <div style="padding:3px 5px; font-size:9.5px; display:flex; justify-content:space-between; color:var(--cvat-text-secondary);">
+                                <div style="padding:3px 5px; font-size:9.5px; display:flex; justify-content:space-between; color:var(--cvat-text-secondary); align-items:center;">
                                     <span><strong>${(item.num_boxes||0) + (item.num_polygons||0)}</strong> obj</span>
-                                    <span style="color:var(--cvat-accent);">Editar ✎</span>
+                                    <span style="color:var(--cvat-accent); display:flex; align-items:center; gap:2px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Editar</span>
                                 </div>
                             `;
                             el.onclick = () => loadExistingAnnotation(item.id);
@@ -2447,12 +2771,12 @@ ANNOTATION_PAGE = """<!DOCTYPE html>
                     renderObjectsList();
                     redrawCanvas();
 
-                    document.getElementById('btn-toggle-live-freeze').innerText = '▶ Retomar Transmissão ao Vivo';
+                    document.getElementById('btn-toggle-live-freeze').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px; margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>Retomar Transmissão ao Vivo';
                     document.getElementById('btn-toggle-live-freeze').className = 'cvat-btn primary';
-                    document.getElementById('live-stream-status-msg').innerText = `⏸ Frame #${imageId} Carregado (${d.filename})`;
+                    document.getElementById('live-stream-status-msg').innerText = `Frame #${imageId} Carregado (${d.filename})`;
                     document.getElementById('live-stream-status-msg').style.color = 'var(--cvat-accent)';
                     document.getElementById('current-video-title').innerText = `Dataset: ${d.filename}`;
-                    showToast(`✔ Frame carregado: ${boxes.length} caixas, ${polygons.length} polígonos.`);
+                    showToast(`Frame carregado: ${boxes.length} caixas, ${polygons.length} polígonos.`);
                 }
             } catch (err) {
                 showToast(`Erro ao carregar frame: ${err}`);
