@@ -467,6 +467,14 @@ class PluggableVisionPipeline:
             if bw < self.config["min_vessel_size_px"] or bh < self.config["min_vessel_size_px"]:
                 continue
 
+            # Teto de tamanho plausivel: rejeita caixas quase do tamanho do frame inteiro
+            # (ex: uma faixa de marca d'agua/overlay da transmissao sendo lida como "barco").
+            # Achado ao vivo no benchmark de 100 frames: uma faixa de texto de identificacao
+            # da câmera (nao um casco) foi detectada e o OCR leu o texto do overlay como se
+            # fosse nome de embarcacao. Ver docs/AUDITORIA_ARQUITETURA.md.
+            if not is_plausible_vessel_size(b):
+                continue
+
             # Prior boost se tiver memória espacial
             boost = 0.0
             cx = (x1 + x2) / 2.0
